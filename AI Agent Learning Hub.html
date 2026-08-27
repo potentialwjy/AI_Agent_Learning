@@ -201,9 +201,94 @@
             <p class="text-sm text-gray-600 leading-relaxed mb-4">
               From stateless goldfish to managed Vertex memory — eight graded rungs (L0→L7): <code class="bg-gray-100 px-1 rounded text-xs">session.state</code>, durable per-user state with <code class="bg-gray-100 px-1 rounded text-xs">DatabaseSessionService</code>, searchable long-term memory via <code class="bg-gray-100 px-1 rounded text-xs">add_session_to_memory / search_memory</code>, file artifacts, working-memory compaction, crash recovery, and the same agent code on managed Vertex services with zero rewrites.
             </p>
-            <div class="flex gap-4 flex-wrap">
+            <div class="flex gap-4 flex-wrap mb-4">
               <a href="https://goo.gle/adk-mem-am"
                  target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-gcp-green hover:underline">🔬 Lab — goo.gle/adk-mem-am</a>
+              <a href="https://github.com/cuppibla/support-memory-lab"
+                 target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:underline">💻 GitHub — support-memory-lab</a>
+            </div>
+
+            <!-- Lab detail toggle -->
+            <div class="border border-gray-100 rounded-xl overflow-hidden">
+              <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('span.arrow').classList.toggle('rotate-180')"
+                class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+                <span class="text-sm font-medium text-gray-700">📋 Lab: Build Memory-Enabled Agents with ADK</span>
+                <span class="arrow text-gray-400 transition-transform duration-200">▼</span>
+              </button>
+              <div class="hidden px-4 py-4 space-y-4 text-sm text-gray-600">
+
+                <!-- Story -->
+                <div class="bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs leading-relaxed text-amber-800">
+                  <strong>The scenario:</strong> You play the support lead at <em>Lumen &amp; Co.</em>, a smart-lamp company. Your agent is <strong>Iris</strong>. Your customer is <strong>Maya</strong>, and her LumenGlow v2 flickers.<br><br>
+                  Iris starts with all five memory failures in place. You fix them — one task, one line of code at a time.<br>
+                  Each task: run the broken behavior → open the file → delete a <code class="bg-amber-100 px-1 rounded"># TODO:</code> prefix → relaunch → same prompts, different world.
+                </div>
+
+                <!-- What you'll learn -->
+                <div>
+                  <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">What you'll learn</p>
+                  <ul class="space-y-1 text-xs">
+                    <li><code class="bg-gray-100 px-1 rounded">tool_context.state</code> — the channel your code reads, next to the transcript the model reads</li>
+                    <li><code class="bg-gray-100 px-1 rounded">LongRunningFunctionTool</code> + <code class="bg-gray-100 px-1 rounded">FunctionResponse</code> — parking a run for a human, answering it from another process</li>
+                    <li><code class="bg-gray-100 px-1 rounded">add_session_to_memory</code> / <code class="bg-gray-100 px-1 rounded">search_memory</code> — a write policy and a recall policy, named and written by you</li>
+                    <li>Connecting <strong>Vertex AI Memory Bank</strong> on an Agent Engine instance you deploy yourself</li>
+                    <li><code class="bg-gray-100 px-1 rounded">save_artifact</code> — giving an upload a home, extracting facts into state</li>
+                    <li>Governed traversals and semantic search over <strong>BigQuery</strong>, embeddings generated in place</li>
+                  </ul>
+                </div>
+
+                <!-- Tasks -->
+                <div>
+                  <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tasks (2 hrs 30 min · Advanced)</p>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div class="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2">
+                      <span class="text-gcp-blue font-bold shrink-0">T1</span>
+                      <span>Set up the development workspace</span>
+                    </div>
+                    <div class="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2">
+                      <span class="text-gcp-blue font-bold shrink-0">T2</span>
+                      <span>State — <em>"What was your order number again?"</em></span>
+                    </div>
+                    <div class="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2">
+                      <span class="text-gcp-blue font-bold shrink-0">T3</span>
+                      <span>The handoff — <em>"Please describe your issue from the beginning."</em></span>
+                    </div>
+                    <div class="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2">
+                      <span class="text-gcp-blue font-bold shrink-0">T4</span>
+                      <span>The desk is already alive</span>
+                    </div>
+                    <div class="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2">
+                      <span class="text-gcp-blue font-bold shrink-0">T5</span>
+                      <span>Long-term memory — <em>"Welcome! How can I help you today?"</em></span>
+                    </div>
+                    <div class="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2">
+                      <span class="text-gcp-blue font-bold shrink-0">T6</span>
+                      <span>Deploy Memory Bank</span>
+                    </div>
+                    <div class="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2">
+                      <span class="text-gcp-blue font-bold shrink-0">T7</span>
+                      <span>The photo — <em>"Could you describe the damage?"</em></span>
+                    </div>
+                    <div class="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2">
+                      <span class="text-gcp-blue font-bold shrink-0">T8</span>
+                      <span>The graph — <em>"We've never seen this issue."</em></span>
+                    </div>
+                    <div class="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2">
+                      <span class="text-gcp-blue font-bold shrink-0">T9</span>
+                      <span>The warehouse, part 1 — the company's data</span>
+                    </div>
+                    <div class="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2">
+                      <span class="text-gcp-blue font-bold shrink-0">T10</span>
+                      <span>The warehouse, part 2 — Iris reads it</span>
+                    </div>
+                    <div class="flex gap-2 items-start bg-gray-50 rounded-lg px-3 py-2 sm:col-span-2">
+                      <span class="text-gray-400 font-bold shrink-0">T11</span>
+                      <span class="text-gray-400">The desk goes to production <em>(optional)</em></span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>

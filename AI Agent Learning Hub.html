@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Agent Learning Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'gcp-blue': '#4285F4',
+            'gcp-red': '#EA4335',
+            'gcp-yellow': '#FBBC04',
+            'gcp-green': '#34A853',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .tab-btn.active {
+      background-color: white;
+      color: #111827;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .coming-soon-card {
+      background: repeating-linear-gradient(
+        45deg,
+        #f9fafb,
+        #f9fafb 10px,
+        #f3f4f6 10px,
+        #f3f4f6 20px
+      );
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200">
+    <div class="max-w-6xl mx-auto px-6 py-6">
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">AI Agent Learning Hub</h1>
+          <p class="text-sm text-gray-500 mt-0.5">Curated resources for building intelligent agents</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Category Tabs -->
+  <div class="bg-gray-100 border-b border-gray-200 sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex gap-1 py-2 overflow-x-auto">
+        <button onclick="switchTab('gcp')" id="tab-gcp"
+          class="tab-btn active flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors whitespace-nowrap">
+          <span class="flex gap-0.5">
+            <span class="w-2 h-2 rounded-full bg-gcp-blue"></span>
+            <span class="w-2 h-2 rounded-full bg-gcp-red"></span>
+            <span class="w-2 h-2 rounded-full bg-gcp-yellow"></span>
+            <span class="w-2 h-2 rounded-full bg-gcp-green"></span>
+          </span>
+          GCP
+        </button>
+        <button onclick="switchTab('claude')" id="tab-claude"
+          class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors whitespace-nowrap">
+          <span class="text-base">🤖</span>
+          Claude Code
+        </button>
+        <button onclick="switchTab('codex')" id="tab-codex"
+          class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors whitespace-nowrap">
+          <span class="text-base">⚡</span>
+          Codex
+        </button>
+        <button onclick="switchTab('fde')" id="tab-fde"
+          class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors whitespace-nowrap">
+          <span class="text-base">🔧</span>
+          FDE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <main class="max-w-6xl mx-auto px-6 py-8">
+
+    <!-- ── GCP Tab ── -->
+    <div id="content-gcp" class="tab-content active space-y-5">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <h2 class="text-base font-semibold text-gray-900">
+            Google Cloud OnAir — ADK Workshop Series
+            <a href="https://cloudonair.withgoogle.com/events/build-self-evolving-agent-autonomous-self-improvement?mkt_tok=ODA4LUdKVy0zMTQAAAGjw8-pDf6J0iUdTahlaM_5VLPJhWYL9toN77zvaz1Mz4CjFa55AqmmMqYEEy3uwbcO9HuU70FW3xvAwag22ls7dcume4rOrNO1x3OiIVv8DGEyNMQk3QJz"
+               target="_blank" class="text-xs text-gcp-blue hover:underline font-normal ml-2">Cloud OnAir Portal →</a>
+          </h2>
+          <p class="text-sm text-gray-500">Hands-on workshops for building production-ready AI agents with Google ADK</p>
+        </div>
+      </div>
+
+      <!-- YouTube Channel -->
+      <a href="https://youtube.com/playlist?list=PLIivdWyY5sqLNeW9MPxldbbevMEJGMWBG&si=yR-yJIm0eVRzaHJl"
+         target="_blank"
+         class="flex items-center gap-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-2xl px-5 py-4 transition-colors group">
+        <div class="bg-red-600 rounded-xl p-2.5 flex-shrink-0">
+          <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-red-700 group-hover:underline">AI Agent Crash Course</p>
+          <p class="text-xs text-red-400">YouTube Playlist · Watch the full series</p>
+        </div>
+        <span class="ml-auto text-red-400 text-sm">→</span>
+      </a>
+
+      <!-- Session 1 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="flex">
+          <div class="w-1 bg-gcp-blue flex-shrink-0"></div>
+          <div class="p-5 flex-1">
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+              <span class="text-xs font-semibold bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full">✓ Recording Available</span>
+              <span class="text-xs text-gray-400 font-medium">Aug 11 · 8:40 AM PDT</span>
+            </div>
+            <h3 class="text-base font-semibold text-gray-900 mb-1">Architecting Multi-Agent Teams: Mastering the Three Orchestration Patterns of ADK 2</h3>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4">
+              ADK 2's three orchestration patterns: <strong>graph workflows</strong>, <strong>collaborative agent teams</strong>, and <strong>dynamic (LLM-shaped) workflows</strong>. Build a Marathon Race-Day Coach across eight runnable levels (L0→L5) — parallel fan-out with JoinNode, deterministic routing, collaborative concierge with dynamic specialists, and recursive deep-research.
+            </p>
+            <div class="flex gap-4 flex-wrap">
+              <a href="https://cloudonair.withgoogle.com/events/architecting-multi-agent-teams-mastering-three-orchestration-patterns-adk-2"
+                 target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-gcp-blue hover:underline">▶ Watch Recording</a>
+              <a href="https://pattern-kitchen-680476413759.us-central1.run.app/marathon"
+                 target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:underline">🚀 Learning App</a>
+              <a href="https://colab.research.google.com/github/cuppibla/adk2-tutorial/blob/main/notebooks/adk2_orchestration_workshop.ipynb"
+                 target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:underline">🐍 Python Workbook</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session 2 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="flex">
+          <div class="w-1 bg-gcp-red flex-shrink-0"></div>
+          <div class="p-5 flex-1">
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+              <span class="text-xs font-semibold bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full">✓ Recording Available</span>
+              <span class="text-xs text-gray-400 font-medium">Aug 13 · 9:00 AM PDT</span>
+            </div>
+            <h3 class="text-base font-semibold text-gray-900 mb-1">Build a Long-Running Agent: Persistent Workflows with Google ADK</h3>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4">
+              Build an employee-onboarding agent across six levels (L0→L5): durable progress with <code class="bg-gray-100 px-1 rounded text-xs">DatabaseSessionService → Cloud SQL</code>, crash recovery with <code class="bg-gray-100 px-1 rounded text-xs">ResumabilityConfig</code>, a human-in-the-loop pause, and an idempotency guard. Ctrl-C mid-onboarding and watch it resume from exactly the right step. Ships to Agent Runtime with Cloud Trace.
+            </p>
+            <div class="flex gap-4 flex-wrap">
+              <a href="https://cloudonair.withgoogle.com/events/build-long-running-agent-persistent-workflows-google-adk"
+                 target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-gcp-red hover:underline">▶ Watch Recording</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session 3 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="flex">
+          <div class="w-1 bg-gcp-yellow flex-shrink-0"></div>
+          <div class="p-5 flex-1">
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+              <span class="text-xs font-semibold bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full">✓ Replay Available</span>
+              <span class="text-xs text-gray-400 font-medium">Aug 20 · 9:00 AM PDT</span>
+            </div>
+            <h3 class="text-base font-semibold text-gray-900 mb-1">Build a Self-Evolving Agent: Autonomous Self-Improvement</h3>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4">
+              A trip-planning agent that rewrites its own prompt. Run <code class="bg-gray-100 px-1 rounded text-xs">adk optimize</code> and watch feasibility climb from ~40% to ~90%. Swap in a "looks-complete" judge and catch it cheating — the lesson: grade the trajectory, not the answer. Scales to Vertex Gen AI Eval and Gemma fine-tuning from traces.
+            </p>
+            <div class="flex gap-4 flex-wrap">
+              <a href="https://cloudonair.withgoogle.com/events/build-self-evolving-agent-autonomous-self-improvement/watch?talk=t1-s1-amer"
+                 target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-yellow-600 hover:underline">▶ Watch Replay</a>
+              <a href="https://cloudonair.withgoogle.com/events/build-self-evolving-agent-autonomous-self-improvement#"
+                 target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:underline">📓 Notebook</a>
+              <a href="https://www.skills.google/focuses/286545"
+                 target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:underline">🔬 Lab</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session 4 — Today -->
+      <div class="bg-white rounded-2xl shadow-sm border-2 border-gcp-green overflow-hidden">
+        <div class="flex">
+          <div class="w-1 bg-gcp-green flex-shrink-0"></div>
+          <div class="p-5 flex-1">
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+              <span class="text-xs font-semibold bg-gcp-green text-white px-2.5 py-0.5 rounded-full">● Today</span>
+              <span class="text-xs text-gray-400 font-medium">Aug 27 · 9:00 AM PDT</span>
+            </div>
+            <h3 class="text-base font-semibold text-gray-900 mb-1">Architecting Agent Memory: Session State, Vector Search, and Managed Cloud Memory</h3>
+            <p class="text-sm text-gray-600 leading-relaxed mb-4">
+              From stateless goldfish to managed Vertex memory — eight graded rungs (L0→L7): <code class="bg-gray-100 px-1 rounded text-xs">session.state</code>, durable per-user state with <code class="bg-gray-100 px-1 rounded text-xs">DatabaseSessionService</code>, searchable long-term memory via <code class="bg-gray-100 px-1 rounded text-xs">add_session_to_memory / search_memory</code>, file artifacts, working-memory compaction, crash recovery, and the same agent code on managed Vertex services with zero rewrites.
+            </p>
+            <div class="flex gap-4 flex-wrap">
+              <a href="https://goo.gle/adk-mem-am"
+                 target="_blank" class="inline-flex items-center gap-1.5 text-sm font-medium text-gcp-green hover:underline">🔬 Lab — goo.gle/adk-mem-am</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Claude Code Tab ── -->
+    <div id="content-claude" class="tab-content">
+      <div class="coming-soon-card rounded-2xl border border-dashed border-gray-300 p-16 text-center">
+        <div class="text-4xl mb-3">🤖</div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-1">Claude Code</h3>
+        <p class="text-sm text-gray-400">Content coming soon</p>
+      </div>
+    </div>
+
+    <!-- ── Codex Tab ── -->
+    <div id="content-codex" class="tab-content">
+      <div class="coming-soon-card rounded-2xl border border-dashed border-gray-300 p-16 text-center">
+        <div class="text-4xl mb-3">⚡</div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-1">Codex</h3>
+        <p class="text-sm text-gray-400">Content coming soon</p>
+      </div>
+    </div>
+
+    <!-- ── FDE Tab ── -->
+    <div id="content-fde" class="tab-content">
+      <div class="coming-soon-card rounded-2xl border border-dashed border-gray-300 p-16 text-center">
+        <div class="text-4xl mb-3">🔧</div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-1">FDE</h3>
+        <p class="text-sm text-gray-400">Content coming soon</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="max-w-6xl mx-auto px-6 py-6 text-center text-xs text-gray-400 border-t border-gray-100 mt-4">
+    AI Agent Learning Hub · Built for continuous learning
+  </footer>
+
+  <script>
+    function switchTab(name) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('content-' + name).classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+  </script>
+
+</body>
+</html>

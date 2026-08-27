@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Build Memory-Enabled Agents with ADK</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'gcp-blue': '#4285F4',
+            'gcp-red': '#EA4335',
+            'gcp-yellow': '#FBBC04',
+            'gcp-green': '#34A853',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <a href="AI Agent Learning Hub.html" class="text-xs text-gray-400 hover:text-gray-600">← Learning Hub</a>
+        <span class="text-gray-200">|</span>
+        <div>
+          <h1 class="text-base font-bold text-gray-900 leading-tight">Build Memory-Enabled Agents with ADK</h1>
+          <p class="text-xs text-gray-400">Google Skills Lab · 2h 30min · Advanced</p>
+        </div>
+      </div>
+      <a href="https://github.com/cuppibla/support-memory-lab" target="_blank"
+         class="text-xs text-gcp-blue hover:underline hidden sm:block">💻 GitHub →</a>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-8">
+
+    <!-- Scenario banner -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-6 mb-8">
+      <p class="text-xs font-semibold uppercase tracking-widest opacity-75 mb-2">The Scenario</p>
+      <p class="text-base font-semibold leading-relaxed mb-3">
+        You're the support lead at <strong>Lumen &amp; Co.</strong>, a smart-lamp company.<br>
+        Your agent is <strong>Iris</strong>. Your customer is <strong>Maya</strong>, and her LumenGlow v2 flickers.
+      </p>
+      <p class="text-sm opacity-90">
+        Iris starts with all five memory failures in place. You fix them — one task, one <code class="bg-white/20 px-1 rounded"># TODO:</code> prefix at a time.
+      </p>
+    </div>
+
+    <!-- Memory failures -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">The Five Memory Failures</p>
+      <div class="space-y-2">
+        <div class="flex gap-3 text-sm"><span class="text-red-500 font-bold">1</span><span>"What was your order number again?" — re-asking within a chat</span></div>
+        <div class="flex gap-3 text-sm"><span class="text-red-500 font-bold">2</span><span>"You've been transferred. Please describe your issue from the beginning." — losing context at handoff</span></div>
+        <div class="flex gap-3 text-sm"><span class="text-red-500 font-bold">3</span><span>"Welcome! How can I help you today? 😊" — forgetting a returning customer</span></div>
+        <div class="flex gap-3 text-sm"><span class="text-red-500 font-bold">4</span><span>"Could you describe the damage?" — after you already sent a photo</span></div>
+        <div class="flex gap-3 text-sm"><span class="text-red-500 font-bold">5</span><span>"We've never seen this issue." — missing what the whole company already knows</span></div>
+      </div>
+    </div>
+
+    <!-- What you'll learn -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-8">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">What You'll Learn</p>
+      <ul class="space-y-2 text-sm text-gray-700">
+        <li class="flex gap-2"><span class="text-gcp-green">✓</span><span><code class="bg-gray-100 px-1 rounded text-xs font-mono">tool_context.state</code> — the channel your code reads, next to the transcript the model reads</span></li>
+        <li class="flex gap-2"><span class="text-gcp-green">✓</span><span><code class="bg-gray-100 px-1 rounded text-xs font-mono">LongRunningFunctionTool</code> + <code class="bg-gray-100 px-1 rounded text-xs font-mono">FunctionResponse</code> — parking a run for a human</span></li>
+        <li class="flex gap-2"><span class="text-gcp-green">✓</span><span><code class="bg-gray-100 px-1 rounded text-xs font-mono">add_session_to_memory</code> / <code class="bg-gray-100 px-1 rounded text-xs font-mono">search_memory</code> — a write policy and a recall policy you write</span></li>
+        <li class="flex gap-2"><span class="text-gcp-green">✓</span><span>Connecting <strong>Vertex AI Memory Bank</strong> on an Agent Engine instance</span></li>
+        <li class="flex gap-2"><span class="text-gcp-green">✓</span><span><code class="bg-gray-100 px-1 rounded text-xs font-mono">save_artifact</code> — giving an upload a home, extracting facts into state</span></li>
+        <li class="flex gap-2"><span class="text-gcp-green">✓</span><span>Semantic search over <strong>BigQuery</strong> with embeddings generated in place</span></li>
+      </ul>
+    </div>
+
+    <!-- Markers legend -->
+    <div class="flex gap-3 flex-wrap mb-6 text-xs">
+      <span class="flex items-center gap-1 bg-slate-800 text-green-300 px-3 py-1 rounded-full font-mono">💻 terminal command</span>
+      <span class="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-mono">📝 edit file</span>
+      <span class="flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-mono">🌐 browser action</span>
+      <span class="flex items-center gap-1 bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-mono">👀 observe</span>
+    </div>
+
+    <!-- Tasks -->
+    <div id="tasks">
+
+    <div class="mb-4 border border-gray-200 rounded-2xl overflow-hidden">
+      <button onclick="toggleTask('task1')" 
+        class="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="w-7 h-7 rounded-full bg-gcp-blue text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+          <span class="text-sm font-semibold text-gray-900">Set up the development workspace</span>
+        </div>
+        <span id="task1-arrow" class="text-gray-400 text-xs transition-transform duration-200">▼</span>
+      </button>
+      <div id="task1" class="hidden border-t border-gray-100 px-5 py-5 bg-white">
+        <p class="text-sm text-gray-700 leading-relaxed mb-3">Set up the development workspace</p>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Clone the lab repository and run setup</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~ git clone https://github.com/cuppibla/support-memory-lab.git cd ~/support-memory-lab ./setup_cloudshell.sh
+cd ~ git clone https://github.com/cuppibla/support-memory-lab.git cd ~/support-memory-lab ./setup_cloudshell.sh The script prints each step as it runs. What it does, in order: API enables aiplatform.googleapis.com — one gcloud services enable virtualenv creates .venv and installs the pinned google-adk[db,gcp]==2.7.1 auth writes .env in Vertex mode — no API key anywhere ; Cloud Shell's own credentials do the talking ( cat .env — three lines, that's the whole auth story) model check doctor.py makes one real Gemini call, so a broken project fails HERE, not in Task 5</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Confirm the model calls are on the global endpoint. ADK loads .env over your shell exports, so .env is what actually decides — setup_cloudshell.sh writes global there for you</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">grep GOOGLE_CLOUD_LOCATION ~/support-memory-lab/.env
+grep GOOGLE_CLOUD_LOCATION ~/support-memory-lab/.env</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Expect GOOGLE_CLOUD_LOCATION=global .</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Activate the environment and verify the rig</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source ~/support-memory-lab/.venv/bin/activate python doctor.py</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>You should see green checks and 🎉 ready — one of them is a real call to Gemini, so a broken project fails HERE rather than in Task 5. ⚠️ A new terminal tab starts deactivated. If you ever see adk: command not found , run source ~/support-memory-lab/.venv/bin/activate in that tab. Every command block below includes it, so blocks are safe to paste into any tab. Tip: One vocabulary note: the repo's folders are the lab's rungs ( r1_short_term … r6_warehouse ), and this manual's Tasks walk them in order. When the dev UI's agent dropdown says r3_last_month , that is Task 5 here.</span></div>
+      </div>
+    </div>
+
+    <div class="mb-4 border border-gray-200 rounded-2xl overflow-hidden">
+      <button onclick="toggleTask('task2')" 
+        class="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="w-7 h-7 rounded-full bg-gcp-red text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+          <span class="text-sm font-semibold text-gray-900">State — &quot;What was your order number again?&quot;</span>
+        </div>
+        <span id="task2-arrow" class="text-gray-400 text-xs transition-transform duration-200">▼</span>
+      </button>
+      <div id="task2" class="hidden border-t border-gray-100 px-5 py-5 bg-white">
+        <p class="text-sm text-gray-700 leading-relaxed mb-3">State — &quot;What was your order number again?&quot; Two channels inside one conversation: the transcript the model reads, and the state your code trusts. The failure — nothing Maya says becomes anything your code can use. The line you'll write — the state write, the single line that separates a chat from a system. Write the line that makes state real Before you run anything, the line this whole task is about is switched off.</p>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Open the file</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cloudshell edit ~/support-memory-lab/r1_short_term/tools.py
+cloudshell edit ~/support-memory-lab/r1_short_term/tools.py</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Read update_ticket . It computes the key, builds the response… and the one line that would store anything is commented out: key = f&quot;ticket_ {field} &quot; # ── YOUR LINE ─ delete the &quot;# TODO: &quot; prefix ────────────────────────── # TODO: tool_context.state[key] = value return { &quot;status&quot; : &quot;success&quot; , &quot;written&quot; : {key: value}}  key = f&quot;ticket_{field}&quot; # ── YOUR LINE ─ delete the &quot;# TODO: &quot; prefix ────────────────────────── # TODO: tool_context.state[key] = value return {&quot;status&quot;: &quot;success&quot;, &quot;written&quot;: {key: value}}</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">📝 Edit file</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Your line</p>
+  <pre class="bg-yellow-950 text-yellow-200 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">delete the # TODO: prefix so it reads tool_context.state[key] = value . Writing through the tool context makes ADK record the change as part of the event, so it lands on disk with everything else. Tip: Why one commented line is the whole task. Leave it off and nothing looks broken: the tool still returns {&quot;status&quot;: &quot;success&quot;} , and Iris still answers follow-up questions correctly — from the transcript , because within a single session the model can read the raw history back. That is exactly what makes this bug invisible in a demo and fatal in production. The model remembers prose; your code — the part that files tickets, issues refunds, routes escalations — has no field to read and no value to act on. State is the second channel, and it exists only because you wrote that line. Launch adk web</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">This is the command you'll use all lab long. Read the flags before you run them — two of them ARE the curriculum</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot;
+cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot; --session_service_uri &quot;sqlite:///lumen.db&quot; — this constructs a SessionService , the ADK component that decides WHERE conversations live: sqlite:// builds a SqliteSessionService over a real file (the family also includes DatabaseSessionService for Postgres/Cloud SQL and VertexAiSessionService for managed sessions). This task ends by flipping this flag; Task 3 exists because of it. --artifact_service_uri &quot;file://$PWD/artifacts_store&quot; — uploaded files get a real directory. Task 7's whole plot. --allow_origins=&quot;*&quot; — not optional in Cloud Shell : Web Preview proxies you through an https://8000-…cloudshell.dev origin the server would otherwise reject, and the UI fails in confusing ways (an empty agent list is the classic symptom). Behind these flags, adk web builds a Runner for each agent folder — ADK's engine, whose one job is run_async(user_id, session_id, new_message) : run the agent one turn against the wired services. You'll open a Runner you can actually read in Task 4.</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Open it via Web Preview → Change port → 8000 (the Web Preview button sits top-right of the Cloud Shell toolbar). The ADK dev UI opens — you'll learn its parts as you need them. Bookmark this one — you'll relaunch this command a dozen times. If it ever refuses to start with [Errno 98] error while attempting to bind on address ('127.0.0.1', 8000): address already in use an earlier adk web is still holding port 8000. Almost always because a terminal tab got closed instead of stopped with Ctrl-C , which leaves the server running with nothing attached to it.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Free the port and try again</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">pkill -f &quot;adk web&quot;
+pkill -f &quot;adk web&quot; Nothing is lost when you do that — every conversation is in lumen.db , which is the whole point of Task 2. Curious what was holding it first? lsof -i:8000 . Watch both channels fill</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>In the dev UI, pick r1_short_term from the agent dropdown (top-left). Paste this into the message box at the bottom and press the ➤ send button (don't rely on Enter): Hi, my lamp keeps flickering. Order number is 8841, it's a LumenGlow v2.  Hi, my lamp keeps flickering. Order number is 8841, it's a LumenGlow v2.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Three update_ticket chips appear — ⚡ means the call fired, ✓ means the response came back. The tool ran three times, once per fact. Chips are clickable: click any ✓ chip and the event detail opens with the response JSON. And a State: chip now sits in the feed — that is your line, showing up as a recorded change. Got a red 429 RESOURCE_EXHAUSTED like the one above, instead of a reply? It looks alarming and it is not your fault — nothing you typed or edited caused it. Vertex serves this lab out of dynamic shared quota : there is no per-project reservation, so a busy moment can be answered with a 429 rather than a queue. Wait a few seconds and send the same message again — it almost always goes through on the next try, and re-sending costs you nothing because the failed turn wrote no state. If it keeps happening, check that .env still has GOOGLE_CLOUD_LOCATION=global . global draws on capacity across regions instead of one, so it absorbs these far better than a pinned region. This can fire on any model call in this lab, not just this one. The answer is always the same: wait, re-send. Background reading: ADK's 429 note and the Vertex AI 429 page .</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Open the side panel's State tab (the Info · State · Artifacts · Evals strip on the left): ticket_order_number: 8841 , ticket_product , ticket_symptom . Three facts your code can now read.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Then ask the follow-up: Quick check - what order number do you have for me, and which lamp is it?  Quick check - what order number do you have for me, and which lamp is it?</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Iris answers correctly — 8841, LumenGlow v2 . Both channels are live now: the transcript is the model's, and state is yours . One line created the second one. Tip: On your own agent: any fact you'll need to act on — an ID, an amount, a decision — belongs in state the moment it appears. Prompt-stuffing (&quot;remember the order number!&quot;) makes the model re-derive facts from prose. State makes them load-bearing. Curious what's physically on disk? Open cloudshell edit ~/support-memory-lab/peek.py — 40 lines of plain SQLite, no ADK in it — then run it with python peek.py to dump every session's transcript AND state. The cliff this task ends on</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Stop the server ( Ctrl-C ) and relaunch it with ONE flag changed — sessions in process RAM instead of a file</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;memory://&quot;
+cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;memory://&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Reload the Web Preview tab, then click the session title in the top bar (next to NEW SESSION ) to open the session list: empty. Your whole conversation is gone — it lived in the process, and the process died.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Ctrl-C , relaunch with the normal command (the sqlite</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">///lumen.db one). Everything is back. The entire difference between amnesia and persistence was one URI on a command you typed — which raises the question Task 3 answers: who else can read that file?</pre>
+</div>
+      </div>
+    </div>
+
+    <div class="mb-4 border border-gray-200 rounded-2xl overflow-hidden">
+      <button onclick="toggleTask('task3')" 
+        class="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="w-7 h-7 rounded-full bg-gcp-yellow text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
+          <span class="text-sm font-semibold text-gray-900">The handoff — &quot;Please describe your issue from the beginning.&quot;</span>
+        </div>
+        <span id="task3-arrow" class="text-gray-400 text-xs transition-transform duration-200">▼</span>
+      </button>
+      <div id="task3" class="hidden border-t border-gray-100 px-5 py-5 bg-white">
+        <p class="text-sm text-gray-700 leading-relaxed mb-3">The handoff — &quot;Please describe your issue from the beginning.&quot; Only one dial moved. Persistence changes where the conversation lives — not what kind of memory it is. The failure — escalation exists, but no human is actually in the loop; the run never stops to wait for one. The lines you'll write — the <code class="bg-gray-100 px-1 rounded text-xs font-mono">LongRunningFunctionTool</code> wrapper, and the <code class="bg-gray-100 px-1 rounded text-xs font-mono">FunctionResponse</code> a supervisor sends back. First, run it broken</p>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Make sure adk web is running — if you stopped it, relaunch</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot;
+cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Open it via Web Preview → Change port → 8000 . Pick r2_handoff from the agent dropdown and send: This replacement lamp is broken too. I want an $80 refund for order 8841.  This replacement lamp is broken too. I want an $80 refund for order 8841.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Watch the escalate_refund chip: it goes ⚡→✓ instantly, inside the same turn , and Iris keeps talking — most likely speaking as if a review happened.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Click the ✓ escalate_refund chip to open its event detail and read the response JSON. The tool returned: { &quot;status&quot; : &quot;pending&quot; , &quot;reason&quot; : &quot;Replacement lamp is broken.&quot; , &quot;amount&quot; : 80 }  {&quot;status&quot;: &quot;pending&quot;, &quot;reason&quot;: &quot;Replacement lamp is broken.&quot;, &quot;amount&quot;: 80} &quot;status&quot;: &quot;pending&quot; — and the model just kept going . Read those two things together, because that is the whole bug: the tool itself said the work was not finished , and the turn rolled straight past it. Nothing stopped it. An ordinary tool returns and the turn rolls on — &quot;pending&quot; was just a word in a dict. Nothing in the runtime treats it as stop and wait : no approval step happened, and nothing is waiting for one. Whatever Iris told Maya about a supervisor, there is no parked call anywhere for a human to find. Remember what this chip looks like. After you fix this, the chip will still go ⚡→✓ and the response will still say &quot;status&quot;: &quot;pending&quot; — that part never changes, and it is not how you'll tell the fix worked. What changes is whether anything is waiting . We'll point at the exact tell. Fix half one: park the run</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Press Ctrl-C in the adk web terminal, then open the file</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cloudshell edit ~/support-memory-lab/r2_handoff/agent.py
+cloudshell edit ~/support-memory-lab/r2_handoff/agent.py # TODO: from google.adk.tools import LongRunningFunctionTool … escalation = escalate_refund # TODO: escalation = LongRunningFunctionTool(escalate_refund) root_agent = make_iris([update_ticket, escalation])
+# TODO: from google.adk.tools import LongRunningFunctionTool … escalation = escalate_refund # TODO: escalation = LongRunningFunctionTool(escalate_refund) root_agent = make_iris([update_ticket, escalation])</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">📝 Edit file</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Your two lines</p>
+  <pre class="bg-yellow-950 text-yellow-200 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">delete both # TODO: prefixes — the import at the top, and the wrap. A long-running tool tells ADK: &quot;what this function just returned is not the final answer — the real one arrives later, from outside.&quot; ADK records the call id as unanswered so a second process can find it and reply. Note what it does not do: it doesn't stop the function running, and it doesn't hide the &quot;pending&quot; dict from the model. Iris still gets it, and still uses it to tell Maya a human is looking.</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Relaunch the server</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot;
+cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Reload the Web Preview tab (it opens a fresh session), pick r2_handoff from the agent dropdown again, and send the exact same refund message as before — copy and paste it: This replacement lamp is broken too. I want an $80 refund for order 8841.  This replacement lamp is broken too. I want an $80 refund for order 8841.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>First, the thing that did not change. The escalate_refund chip still goes ⚡→✓, and clicking it still shows &quot;status&quot;: &quot;pending&quot; . Iris still says a supervisor is reviewing. If you were looking for the pending to disappear: it doesn't, and that is correct. A long-running tool still runs, still returns immediately, and its return value is still handed to the model — that is how Iris knows to tell Maya a human is looking at it. LongRunningFunctionTool was never a promise to change the chip.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Now the tell. Look between the ⚡ row and the ✓ row: there is a new Enter your response... input box with a send arrow, sitting inside the event feed — highlighted in amber below. That box is the dev UI saying this call is parked and I am holding it open for an answer from outside . It did not exist on your broken run. In the graph below, escalate_refund is also drawn with a heavier dashed outline than update_ticket — the UI's marker for a long-running tool. That box is a fully working supervisor console . Whatever you type becomes the tool's real return value: paste valid JSON and it is sent as-is, type bare text and it is wrapped as {&quot;result&quot;: &quot;your text&quot;} . So the turn ends — same as before — but this time something is waiting . That is the difference the chip could never have shown you. Fix half two: answer the parked call</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Click into the Enter your response... box, paste the supervisor's decision, and press the send arrow: { &quot;status&quot; : &quot;approved&quot; , &quot;approved_by&quot; : &quot;supervisor&quot; , &quot;note&quot; : &quot;Refund approved. Tell the customer it arrives in 3-5 days.&quot; }  {&quot;status&quot;: &quot;approved&quot;, &quot;approved_by&quot;: &quot;supervisor&quot;, &quot;note&quot;: &quot;Refund approved. Tell the customer it arrives in 3-5 days.&quot;} Read it like a sentence before you send it. status is what the tool finally &quot;returns&quot;; the rest is context the model can quote back. This is the FunctionResponse the runtime has been holding the turn open for — the answer that arrived later, from outside.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>The run resumes on the spot . A new ✓ escalate_refund chip appears carrying your response, and Iris picks the conversation back up: IRIS: ...it has been approved! You should see that $80 refund in 3-5 business days.  IRIS: ...it has been approved! You should see that $80 refund in 3-5 business days. Maya never repeated a word. The turn stopped for a human and started again the moment the human answered — and the conversation it resumed was read back out of lumen.db , not held in the model's head. A parked call can be answered exactly once. Once you send that response the escalation is closed and the box disappears. If you want to watch it again, or try a denial instead, send the refund message once more to park a fresh call: This replacement lamp is broken too. I want an $80 refund for order 8841. No response box to type into? Then nothing is parked, and the wrap is the reason — check `r2_handoff/agent.py` reads escalation = LongRunningFunctionTool(escalate_refund) with the import above it uncommented, relaunch, and send the refund message again. An ordinary tool leaves nothing behind for anyone to answer; parking is what creates the supervisor's job in the first place. Tip: The beat: a human can only &quot;check the chat history&quot; if the history lives outside the process. Persistence isn't a durability feature that happens to sit near human-in-the-loop — it's the precondition for it. Want to see that literally? The repo ships r2_handoff/supervisor.py — seventy lines that open the same lumen.db with the same SqliteSessionService adk web is using, scan for an unanswered escalate_refund , print the history a human would review, and send back exactly the FunctionResponse you just pasted.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">cloudshell edit ~/support-memory-lab/r2_handoff/supervisor.py — worth reading even if you never run it. Any process that can read the session store can take over the conversation</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">a CLI, a cron job, a web dashboard. You'll meet that idea again in Task 4, behind an Approve button.</pre>
+</div>
+      </div>
+    </div>
+
+    <div class="mb-4 border border-gray-200 rounded-2xl overflow-hidden">
+      <button onclick="toggleTask('task4')" 
+        class="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="w-7 h-7 rounded-full bg-gcp-green text-white text-xs font-bold flex items-center justify-center flex-shrink-0">4</span>
+          <span class="text-sm font-semibold text-gray-900">The desk is already alive</span>
+        </div>
+        <span id="task4-arrow" class="text-gray-400 text-xs transition-transform duration-200">▼</span>
+      </button>
+      <div id="task4" class="hidden border-t border-gray-100 px-5 py-5 bg-white">
+        <p class="text-sm text-gray-700 leading-relaxed mb-3">The desk is already alive Everything Task 3 taught — persistent sessions, the parked call, the <code class="bg-gray-100 px-1 rounded text-xs font-mono">FunctionResponse</code> — is enough to run a real product. So run it now, and keep it running for the rest of the lab.</p>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Open a new terminal tab for the desk backend (adk web can stay up — they use different ports)</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate uvicorn main:app --app-dir desk_app/backend --port 8080</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">And one more tab for the frontend, with real npm</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab/desk_app/frontend npm install npm run dev</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Vite prints Local: http://localhost:5173/ .</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Web Preview → Change port → 5173. The Lumen Support Desk opens: Maya's chat on the left, the supervisor's desk on the right, one status dot in the header. Type the refund request in the LEFT panel's input and press ➤: This is the second broken lamp I got. I want an $80 refund for order 8841.  This is the second broken lamp I got. I want an $80 refund for order 8841.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>The header dot turns amber , and the RIGHT panel lights up with an $80 · refund · #8841 card — the full conversation underneath. Read the history first, then click Approve . The left panel continues on its own: refund approved, 3–5 days. That Approve button is your supervisor.py behind a UI — same pending scan, same FunctionResponse . The plumbing adk web hides This app is also the first place you can READ the machinery the flags have been constructing.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">In your work tab</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cloudshell edit ~/support-memory-lab/desk_app/backend/main.py
+cloudshell edit ~/support-memory-lab/desk_app/backend/main.py</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Find the block titled the plumbing adk web hides behind flags and read it top to bottom — four pieces, each one sentence: session_service = SqliteSessionService(db_path= str (REPO / &quot;lumen.db&quot; )) # WHERE conversations live memory_service = InMemoryMemoryService() # the archive (Task 5 upgrades this) artifact_service = FileArtifactService(root_dir=REPO / &quot;artifacts_store&quot; ) # where files live runner = Runner(agent=root_agent, app_name=APP, session_service=session_service, memory_service=memory_service, artifact_service=artifact_service)  session_service = SqliteSessionService(db_path=str(REPO / &quot;lumen.db&quot;)) # WHERE conversations live memory_service = InMemoryMemoryService() # the archive (Task 5 upgrades this) artifact_service = FileArtifactService(root_dir=REPO / &quot;artifacts_store&quot;) # where files live runner = Runner(agent=root_agent, app_name=APP, session_service=session_service, memory_service=memory_service, artifact_service=artifact_service) A SessionService answers where do conversations live? — this is literally the class your sqlite:// flag builds. A MemoryService answers what does the archive remember? — in Task 6 you'll point THIS line at Memory Bank. An ArtifactService answers where do files live? — the same directory as your file:// flag. The Runner is ADK's engine: run_async(user_id, session_id, new_message) runs Iris one turn against exactly these services. adk web builds one per agent folder; this one is yours to read. Tip: The desk runs the finished Iris from _solutions/ — your reference implementation, always on. As you unlock each remaining rung in adk web, come back here and try the same power in the product: recall after Task 5, the photo after Task 7, the citation path after Task 8. Web Preview shows one port at a time — just switch between 8000 (adk web) and 5173 (the desk) as you go.</span></div>
+      </div>
+    </div>
+
+    <div class="mb-4 border border-gray-200 rounded-2xl overflow-hidden">
+      <button onclick="toggleTask('task5')" 
+        class="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="w-7 h-7 rounded-full bg-gcp-blue text-white text-xs font-bold flex items-center justify-center flex-shrink-0">5</span>
+          <span class="text-sm font-semibold text-gray-900">Long-term memory — &quot;Welcome! How can I help you today?&quot;</span>
+        </div>
+        <span id="task5-arrow" class="text-gray-400 text-xs transition-transform duration-200">▼</span>
+      </button>
+      <div id="task5" class="hidden border-t border-gray-100 px-5 py-5 bg-white">
+        <p class="text-sm text-gray-700 leading-relaxed mb-3">Long-term memory — &quot;Welcome! How can I help you today?&quot; A new kind of memory — but still inside the process, so it dies with the server. The next task fixes that. The failure — Maya returns a week later and Iris treats her as a stranger, while last week's session sits in the same database. The lines you'll write — the write policy and the recall policy. After Task 3 you might believe: &quot;my sessions are in SQLite, so my agent has memory.&quot; This task breaks that belief. Persistence answers can this conversation survive? Memory answers can the NEXT conversation use it? Different questions, different machinery. Run it broken</p>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Make sure adk web is running — if you stopped it, relaunch</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot;
+cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Open it via Web Preview → Change port → 8000 . Pick r3_last_month from the agent dropdown — this is last week's conversation: My LumenGlow v2 was flickering, order 8841. The firmware update you suggested fixed it! Please close my ticket.  My LumenGlow v2 was flickering, order 8841. The firmware update you suggested fixed it! Please close my ticket.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Click the ✓ close_ticket chip and read the response. Three fields, and the first one is a decoy: { &quot;status&quot; : &quot;success&quot; , &quot;filed_to_memory&quot; : false , &quot;resolution&quot; : &quot;Firmware update resolved the flickering issue.&quot; }  {&quot;status&quot;: &quot;success&quot;, &quot;filed_to_memory&quot;: false, &quot;resolution&quot;: &quot;Firmware update resolved the flickering issue.&quot;} &quot;status&quot;: &quot;success&quot; is true and useless — the ticket really did close. The field that matters is &quot;filed_to_memory&quot;: false . Nothing was archived. This is Task 2's lesson wearing a different hat: a green chip reporting success while the thing you actually needed silently did not happen. Tip: Your resolution wording will differ from the example — the model writes that line itself. Only filed_to_memory matters here. And unlike recall_history below, this response carries no note field explaining the TODO; the false is the only signal you get. Seeing {&quot;status&quot;: &quot;closed_without_memory&quot;, &quot;note&quot;: &quot;no memory service wired on this runner&quot;} instead, with no filed_to_memory field at all? That's a different branch of the tool: the runner came up without a memory service. Stop the server and relaunch it with the Task 5 command above.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Click NEW SESSION (top bar) — a week has passed: Did I report a flickering LumenGlow lamp to you before?  Did I report a flickering LumenGlow lamp to you before?</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Click the ✓ recall_history chip. This one does spell out why: { &quot;status&quot; : &quot;empty&quot; , &quot;past_conversations&quot; : [], &quot;note&quot; : &quot;recall not wired yet (TODO)&quot; }  {&quot;status&quot;: &quot;empty&quot;, &quot;past_conversations&quot;: [], &quot;note&quot;: &quot;recall not wired yet (TODO)&quot;} &quot;past_conversations&quot;: [] — Iris, honestly: she has no idea. Write both policies</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Press Ctrl-C in the adk web terminal, then open the file</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cloudshell edit ~/support-memory-lab/r3_last_month/tools.py
+cloudshell edit ~/support-memory-lab/r3_last_month/tools.py Two switched-off lines, and their names are the lesson. In close_ticket — the write policy (when does a conversation become memory?): # TODO: await memory_service.add_session_to_memory(session); filed = True
+# TODO: await memory_service.add_session_to_memory(session); filed = True In recall_history — the recall policy (what query searches it?): # TODO: result = await tool_context.search_memory(query)
+# TODO: result = await tool_context.search_memory(query)</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">📝 Edit file</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Delete both # TODO</p>
+  <pre class="bg-yellow-950 text-yellow-200 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">prefixes.</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Relaunch the server (same command as always)</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot;
+cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Reload the Web Preview tab (it opens a fresh session), pick r3_last_month from the agent dropdown again, and send the same closing message as before — copy and paste it: My LumenGlow v2 was flickering, order 8841. The firmware update you suggested fixed it! Please close my ticket.  My LumenGlow v2 was flickering, order 8841. The firmware update you suggested fixed it! Please close my ticket.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Click the ✓ close_ticket chip. Same three fields as before, one of them flipped: { &quot;status&quot; : &quot;success&quot; , &quot;filed_to_memory&quot; : true , &quot;resolution&quot; : &quot;Firmware update resolved the flickering issue.&quot; }  {&quot;status&quot;: &quot;success&quot;, &quot;filed_to_memory&quot;: true, &quot;resolution&quot;: &quot;Firmware update resolved the flickering issue.&quot;} &quot;filed_to_memory&quot;: true — the write policy fired, and the conversation is now in memory:</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Click NEW SESSION — and first, ask it vague on purpose: Have I contacted you before?  Have I contacted you before?</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Iris almost certainly answers, and answers correctly — the flickering LumenGlow v2, order 8841, fixed by a firmware update. The recall policy works. Now look at why it matched, because it is not what it looks like. She matched on &quot;have&quot;, &quot;I&quot; and &quot;you&quot;. The local InMemoryMemoryService is not semantic. It splits your query into words, counts how many of them appear in each stored event, and returns anything scoring one or more — best-scoring first. Last week's transcript contains &quot;The firmware update you suggested fixed it!&quot; and &quot;Please close my ticket&quot; , so a question carrying no subject matter at all still lands hits on pronouns. ADK's own source says the quiet part out loud: &quot;Almost any two sentences share a word.&quot; Right answer, wrong reason. With one customer and one archived conversation the store is too small to be wrong — there is only one thing to return. Add a thousand tickets and those pronoun hits start surfacing other conversations, ranked by nothing more meaningful than how many ordinary words they happen to share. Recall is a query problem : production services match meaning (embeddings), and &quot;similar words ≠ the right memory&quot; stays true at every scale — Task 8 makes it the main event. Tip: Iris writes the query herself — you can see it on the recall_history chip — so results vary a little run to run. If she happens to come up empty here, that is the same lesson from the other side: the query she wrote shared no tokens with the transcript. Either way nothing understood anything; words either overlapped or they didn't.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Now ask the question the way a returning customer actually would, with real content words in it: Did I report a flickering LumenGlow lamp to you before?  Did I report a flickering LumenGlow lamp to you before?</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Iris recognises a returning customer — something like &quot;Yes, you did! You reported a flickering LumenGlow v2 (order #8841) previously, which was resolved with a firmware update. Is that issue happening again?&quot; Her exact wording will differ from run to run. What matters is where the order number and the fix came from: the archive, not this conversation. The old session was in lumen.db the whole time and did nothing until you wrote a policy. Say the lab's central line out loud: filed is not remembered. Iris now recognizes a returning customer — two lines, both yours.</span></div>
+      </div>
+    </div>
+
+    <div class="mb-4 border border-gray-200 rounded-2xl overflow-hidden">
+      <button onclick="toggleTask('task6')" 
+        class="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="w-7 h-7 rounded-full bg-gcp-red text-white text-xs font-bold flex items-center justify-center flex-shrink-0">6</span>
+          <span class="text-sm font-semibold text-gray-900">Deploy Memory Bank</span>
+        </div>
+        <span id="task6-arrow" class="text-gray-400 text-xs transition-transform duration-200">▼</span>
+      </button>
+      <div id="task6" class="hidden border-t border-gray-100 px-5 py-5 bg-white">
+        <p class="text-sm text-gray-700 leading-relaxed mb-3">Deploy Memory Bank Same two policies, same two lines as Task 5. Only the home moved — and now it survives restarts, machines, and days. Task 5's archive has one problem left, and you can trigger it yourself:</p>
+<div class="mb-4">
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto font-mono">restart the server,</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>re-ask the recall question. Empty again. Sessions survived (SQLite); the archive didn't — InMemoryMemoryService lives and dies with the process. This task deploys the managed fix: Vertex AI Memory Bank , hosted on an Agent Engine instance you create, verify, and connect yourself. Step 0 · Point this task at a region</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Everywhere else this lab uses global , which is right for Gemini calls — nothing is created, so no region applies. This task is different: it creates a deployed resource that physically lives in one region, and every client has to look for it there.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">In your second terminal tab (adk web can keep running), set the region the script and the desk both read</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source ~/support-memory-lab/.venv/bin/activate export MEMORY_BANK_LOCATION=us-west1 echo &quot;Memory Bank will live in: $MEMORY_BANK_LOCATION &quot;
+cd ~/support-memory-lab source ~/support-memory-lab/.venv/bin/activate export MEMORY_BANK_LOCATION=us-west1 echo &quot;Memory Bank will live in: $MEMORY_BANK_LOCATION&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Expect Memory Bank will live in: us-west1 . Step 1 · Deploy</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">First look at what you're about to run — it's 10 lines and prints everything</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cloudshell edit ~/support-memory-lab/r3_last_month/create_memory_bank.py
+cloudshell edit ~/support-memory-lab/r3_last_month/create_memory_bank.py</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>One SDK call — agent_engines.create() — creates the Agent Engine instance that hosts your Memory Bank. It reads MEMORY_BANK_LOCATION , which you just set.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Deploy it ( ~1 minute ; the full output lands in membank_run.txt so the next step can read the resource name out of it instead of you retyping it)</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source ~/support-memory-lab/.venv/bin/activate python r3_last_month/create_memory_bank.py 2&gt;&amp;1 | tee membank_run.txt
+cd ~/support-memory-lab source ~/support-memory-lab/.venv/bin/activate python r3_last_month/create_memory_bank.py 2&gt;&amp;1 | tee membank_run.txt ⚠️ Check your prompt says (.venv) before you run this. Without it you get Cloud Shell's system Python, which does not have the pinned google-adk[db,gcp]==2.7.1 or the Vertex AI SDK this script imports.</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>You should see it end with the resource name: Done. resource: projects/&lt;number&gt;/locations/us-west1/reasoningEngines/&lt;id&gt; Your AGENT_ENGINE_ID = &lt;id&gt; Next: relaunch adk web with your archive in the cloud — add this flag to the adk web command you already know: --memory_service_uri &quot;agentengine://projects/…/reasoningEngines/…&quot; &lt;/id&gt;&lt;/id&gt;&lt;/number&gt;  Done. resource: projects/ /locations/us-west1/reasoningEngines/ Your AGENT_ENGINE_ID = Next: relaunch adk web with your archive in the cloud — add this flag to the adk web command you already know: --memory_service_uri &quot;agentengine://projects/…/reasoningEngines/…&quot; Step 2 · Capture the resource name</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Everything below needs that resource name. Read it straight out of the run log — no copying by hand</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab export AGENT_ENGINE=$(grep -oE 'projects/[^/]+/locations/[a-z0-9-]+/reasoningEngines/[0-9]+' membank_run.txt | tail -1) echo &quot;AGENT_ENGINE= $AGENT_ENGINE &quot;
+cd ~/support-memory-lab export AGENT_ENGINE=$(grep -oE 'projects/[^/]+/locations/[a-z0-9-]+/reasoningEngines/[0-9]+' membank_run.txt | tail -1) echo &quot;AGENT_ENGINE=$AGENT_ENGINE&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Expect one line: AGENT_ENGINE=projects/…/locations/us-west1/reasoningEngines/… ⚠️ AGENT_ENGINE is a shell export, so it lives in this tab only. If you open a new terminal tab later — or the Cloud Shell session reconnects — re-run the two commands above before any step that uses $AGENT_ENGINE . `membank_run.txt` is on disk, so the value is always one command away. Step 3 · Verify it exists</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">List your project's Agent Engine instances straight from the API</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">curl -s -H &quot;Authorization: Bearer $(gcloud auth print-access-token) &quot; \ &quot;https://us-west1-aiplatform.googleapis.com/v1/projects/ $GOOGLE_CLOUD_PROJECT /locations/us-west1/reasoningEngines&quot;
+curl -s -H &quot;Authorization: Bearer $(gcloud auth print-access-token)&quot; \ &quot;https://us-west1-aiplatform.googleapis.com/v1/projects/$GOOGLE_CLOUD_PROJECT/locations/us-west1/reasoningEngines&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Expect a reasoningEngines entry whose displayName is support-memory-lab — your Memory Bank's home, deployed. Tip: Three names, one thing. You deployed an Agent Engine instance, the API calls the resource a reasoningEngine , and the console lists it under Agent Runtime in Agent Platform. Older and newer names for the same managed runtime, fossilized in the tooling — don't let them read as three products. Memory Bank is a service hosted on that instance, which is why creating one is the prerequisite for having the other. Step 4 · Connect: one more flag</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Ctrl-C the adk web server, then run the same command plus your new flag — $AGENT_ENGINE is the value you captured in Step 2</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source ~/support-memory-lab/.venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot; \ --memory_service_uri &quot;agentengine:// $AGENT_ENGINE &quot;
+cd ~/support-memory-lab source ~/support-memory-lab/.venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot; \ --memory_service_uri &quot;agentengine://$AGENT_ENGINE&quot; Same agent code — and now every Memory Bank verb is something you already own: Verb Where it lives The line connect the launch command (or your own runner) --memory_service_uri &quot;agentengine://…&quot; · VertexAiMemoryBankService(project, location, agent_engine_id) write close_ticket — your Task 5 write policy await memory_service.add_session_to_memory(session) read recall_history — your Task 5 recall policy await tool_context.search_memory(query) The money shot. Run the whole arc once more — but this time the archive is not in the process, so killing the server proves it.</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>1 — File a conversation into Memory Bank. Reload the Web Preview tab, pick r3_last_month from the agent dropdown, and send: My LumenGlow v2 was flickering, order 8841. The firmware update you suggested fixed it! Please close my ticket.  My LumenGlow v2 was flickering, order 8841. The firmware update you suggested fixed it! Please close my ticket.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>The ✓ close_ticket chip reads &quot;filed_to_memory&quot;: true — same write policy, new destination. That conversation just went to Memory Bank, not to a dict in RAM.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>2 — Recall it in a new session. Click NEW SESSION , then ask with real content words: Did I report a flickering LumenGlow lamp to you before?  Did I report a flickering LumenGlow lamp to you before?</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Iris knows. So far this looks exactly like Task 5 — that's the point; you changed no agent code.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">3 — Now kill the process. Ctrl-C the adk web terminal and relaunch with the same membank command</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source ~/support-memory-lab/.venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot; \ --memory_service_uri &quot;agentengine:// $AGENT_ENGINE &quot;
+cd ~/support-memory-lab source ~/support-memory-lab/.venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot; \ --memory_service_uri &quot;agentengine://$AGENT_ENGINE&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>4 — Ask one more time. Reload the Web Preview tab, pick r3_last_month , click NEW SESSION , and send the same question: Did I report a flickering LumenGlow lamp to you before?  Did I report a flickering LumenGlow lamp to you before?</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>It still remembers. Back in Task 5 this exact step came up empty — InMemoryMemoryService died with the process. The archive now outlives the process, the machine, and the day. Tip: Memory Bank does not store the raw transcript — it distills facts from the session, and that consolidation is asynchronous. If step 2 or 4 comes back empty or thin on the first try, give it ~30 seconds and ask again before assuming something is wrong. The same connection, in code you own The flag is adk web's spelling. Your own Runner spells the connection like this — and you already have one:</span></div>
+<div class="mb-4">
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto font-mono">cloudshell edit ~/support-memory-lab/desk_app/backend/main.py  cloudshell edit ~/support-memory-lab/desk_app/backend/main.py</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Find the AGENT_ENGINE block — the Memory Bank configuration, exactly as the ADK docs write it: memory_service = VertexAiMemoryBankService( project=os.environ[ &quot;GOOGLE_CLOUD_PROJECT&quot; ], # which project location=os.environ.get( &quot;MEMORY_BANK_LOCATION&quot; , &quot;us-central1&quot; ), # where the instance lives agent_engine_id=AGENT_ENGINE.split( &quot;/&quot; )[- 1 ], # WHICH Agent Engine hosts your Memory Bank )  memory_service = VertexAiMemoryBankService( project=os.environ[&quot;GOOGLE_CLOUD_PROJECT&quot;], # which project location=os.environ.get(&quot;MEMORY_BANK_LOCATION&quot;, &quot;us-central1&quot;),# where the instance lives agent_engine_id=AGENT_ENGINE.split(&quot;/&quot;)[-1], # WHICH Agent Engine hosts your Memory Bank ) Three parameters — project, location, agent engine id — and it drops into Runner(memory_service=…) in place of InMemoryMemoryService . It reads the same two variables you already exported, which is why the desk needs no edit to follow your instance.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Stop the desk backend ( Ctrl-C in its tab) and restart it with both values, and the product's archive moves to Memory Bank too</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source ~/support-memory-lab/.venv/bin/activate export MEMORY_BANK_LOCATION=us-west1 export AGENT_ENGINE=$(grep -oE 'projects/[^/]+/locations/[a-z0-9-]+/reasoningEngines/[0-9]+' membank_run.txt | tail -1) uvicorn main:app --app-dir desk_app/backend --port 8080</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>The two exports are repeated here on purpose: this is a different terminal tab from the one you deployed in, and exports don't cross tabs. Prove it in the product Same arc as the money shot, now in the app instead of the dev UI — and this time you wipe the conversation rather than the process.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>1 — Open the desk. Web Preview → Change port → 5173 and reload the tab (the backend just restarted underneath it). Maya's chat is the LEFT panel. Send a closing message: The firmware update fixed my flickering LumenGlow v2, order 8841. Please close my ticket.  The firmware update fixed my flickering LumenGlow v2, order 8841. Please close my ticket.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Iris confirms the ticket is closed. Behind that reply, the same close_ticket write policy just filed the conversation — into Memory Bank now, because of the flag you added.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">2 — Delete the conversation. In your work tab, wipe the desk's session entirely</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">curl -X POST http://localhost:8080/api/reset</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>3 — Reload the desk. The chat is empty — that transcript is gone from lumen.db , not archived-and-hidden. Deleted. Now ask: Did I report a flickering LumenGlow lamp to you before?  Did I report a flickering LumenGlow lamp to you before?</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>She still knows. There is no session history left to read from; the answer is coming out of Memory Bank. A product can throw away the whole conversation and keep the customer. Memories are scoped per app and user. Memory Bank files everything under {app_name, user_id} — the desk writes as desk_app / maya , while adk web wrote as r3_last_month with its own user. So the desk will not recall what you filed in the dev UI a moment ago, and that is correct, not a bug: two applications, two archives, one Memory Bank instance. Close a ticket in the desk first, as above, or it has nothing of its own to find.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>See it in the console: Navigation menu → Vertex AI → Agent Engine → your support-memory-lab instance → Memory Bank . The facts distilled from Maya's closed tickets are inspectable there — memory you can audit outside any code. Tip: The memory family, for the road: InMemoryMemoryService (keyword match, dies with the process — where you started) · VertexAiMemoryBankService (LLM-distilled facts, semantic search, persistent — where you are now) · VertexAiRagMemoryService (vector search over full transcripts via a RAG corpus). All three plug into the same Runner(memory_service=…) slot, and your write/recall policies don't change. ADK also ships a PreloadMemoryTool that recalls automatically at each turn's start — this lab used an explicit tool so you could SEE recall fire as a chip. Memory Bank distills — it stores extracted facts, not transcripts, and consolidation is asynchronous. If a recall right after closing comes back thin, give it ~30 seconds and ask again. The phrasing will also differ from the InMemory version: you're reading distilled memory, not search hits.</span></div>
+      </div>
+    </div>
+
+    <div class="mb-4 border border-gray-200 rounded-2xl overflow-hidden">
+      <button onclick="toggleTask('task7')" 
+        class="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="w-7 h-7 rounded-full bg-gcp-yellow text-white text-xs font-bold flex items-center justify-center flex-shrink-0">7</span>
+          <span class="text-sm font-semibold text-gray-900">The photo — &quot;Could you describe the damage?&quot;</span>
+        </div>
+        <span id="task7-arrow" class="text-gray-400 text-xs transition-transform duration-200">▼</span>
+      </button>
+      <div id="task7" class="hidden border-t border-gray-100 px-5 py-5 bg-white">
+        <p class="text-sm text-gray-700 leading-relaxed mb-3">The photo — &quot;Could you describe the damage?&quot; The upload gets a home of its own; the facts you extract from it land back in short-term working state. The failure — Maya sends a photo; it influences one reply and then vanishes. No file kept, nothing searchable. The line you'll write — the artifact save, in a callback that catches every upload. Run it broken</p>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Make sure adk web is running — if you stopped it, relaunch</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot;
+cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Open it via Web Preview → Change port → 8000 . Pick r4_the_photo from the agent dropdown.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>First get Maya's photo onto YOUR computer — the attach dialog picks files from your machine, not from Cloud Shell. Right-click the photo below and choose Save image as… (or use the direct link: lamp_photo.jpg ):</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Then click the + (attach) button in the message box, choose the lamp_photo.jpg you just saved, and send: Here is a photo of my broken lamp. What do you see? Please record the damage.  Here is a photo of my broken lamp. What do you see? Please record the damage. Tip: Browser won't let you attach a file? Managed browsers often block uploads outright — Incognito under a corporate policy is the usual case, and it isn't something you can work around in the UI. You don't need the UI. An attachment is just an inline image part on the message, so a script can send exactly the same thing.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">In your second terminal tab</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate python send_photo.py
+cd ~/support-memory-lab source .venv/bin/activate python send_photo.py It uses the copy of Maya's photo already in the repo, so there is nothing to download either, and it runs against the same lumen.db and artifacts_store that adk web is using. It prints the record_damage call and Iris's reply, then leaves the conversation in a session called photo-no-upload .</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>To carry on with the rest of this task in the dev UI: reload the Web Preview tab, pick r4_the_photo , click the session title in the top bar and open photo-no-upload . The chips and the State tab are all there — everything below works the same way.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>The moment that makes this task — Iris reads the sticker in the image . Her reply names the model, the damage, and the batch code: something along the lines of &quot;I see the vertical crack in the base of your LumenGlow v2, batch B7. I've recorded those details for you.&quot; Iris writes that sentence herself, so your wording will not match word for word — and doesn't need to. The only thing that matters is that B7 came off a sticker in the photo , not from anything Maya typed.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Click the ✓ record_damage chip: {&quot;model&quot;: &quot;LumenGlow v2&quot;, &quot;damage&quot;: &quot;crack across the base&quot;, &quot;batch&quot;: &quot;B7&quot;} — the model did the seeing , the tool recorded what was seen . The State tab now has photo_model / photo_damage / photo_batch . A supplier sticker just became queryable state. So what's broken?</span></div>
+<div class="mb-4">
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto font-mono">find ~/support-memory-lab/artifacts_store - type f  find ~/support-memory-lab/artifacts_store -type f</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Nothing. The photo lived exactly as long as the message. The facts survived (state); the evidence is gone. Write the save</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Press Ctrl-C in the adk web terminal, then open the file</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cloudshell edit ~/support-memory-lab/r4_the_photo/callbacks.py
+cloudshell edit ~/support-memory-lab/r4_the_photo/callbacks.py stash_uploaded_photo runs before every turn and already finds image parts in the user's message — the line that would keep them is switched off: if blob and (blob.mime_type or &quot;&quot; ).startswith( &quot;image/&quot; ): # ── KEEP THE FILE ─ delete the &quot;# TODO: &quot; prefix ────────────── # TODO: await callback_context.save_artifact(&quot;user:lamp_photo.jpg&quot;, part) pass
+if blob and (blob.mime_type or &quot;&quot;).startswith(&quot;image/&quot;): # ── KEEP THE FILE ─ delete the &quot;# TODO: &quot; prefix ────────────── # TODO: await callback_context.save_artifact(&quot;user:lamp_photo.jpg&quot;, part) pass</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">📝 Edit file</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Delete the # TODO</p>
+  <pre class="bg-yellow-950 text-yellow-200 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">prefix. The user: prefix in the name scopes the artifact to Maya across all her sessions, not just this one.</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Relaunch the server</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot;
+cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Reload the Web Preview tab (it opens a fresh session), pick r4_the_photo from the agent dropdown again, click the + (attach) button, choose the same lamp_photo.jpg you saved earlier, and send the same message — copy and paste it: Here is a photo of my broken lamp. What do you see? Please record the damage.  Here is a photo of my broken lamp. What do you see? Please record the damage. Can't attach files in your browser? Send it from the terminal again —</span></div>
+<div class="mb-4">
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto font-mono">python send_photo.py . It re-sends the same photo, and now that your line is live the artifact gets saved.</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Now run the same check as before — and this time there's a real file, saved by the file</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">// artifact service your own launch command configured: find ~/support-memory-lab/artifacts_store - type f
+find ~/support-memory-lab/artifacts_store -type f</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Expect: artifacts_store/apps/r4_the_photo/users/user/artifacts/lamp_photo.jpg/versions/0/lamp_photo.jpg  artifacts_store/apps/r4_the_photo/users/user/artifacts/lamp_photo.jpg/versions/0/lamp_photo.jpg Read that path like a sentence: this artifact belongs to the app → the user → all her sessions , with versions. That's what the user: prefix bought you. The dev UI's Artifacts tab lists session-scoped artifacts — a user: -scoped file belongs to Maya, not to any one session, so it doesn't appear there. The path on disk is the truth. And the honest pattern overall: long-term memory stores are text-first — the artifact holds the pixels, state and memory hold the extraction, and the name ties them together. Extract-then-store, with an artifact ref.</span></div>
+      </div>
+    </div>
+
+    <div class="mb-4 border border-gray-200 rounded-2xl overflow-hidden">
+      <button onclick="toggleTask('task8')" 
+        class="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="w-7 h-7 rounded-full bg-gcp-green text-white text-xs font-bold flex items-center justify-center flex-shrink-0">8</span>
+          <span class="text-sm font-semibold text-gray-900">The graph — &quot;We've never seen this issue.&quot;</span>
+        </div>
+        <span id="task8-arrow" class="text-gray-400 text-xs transition-transform duration-200">▼</span>
+      </button>
+      <div id="task8" class="hidden border-t border-gray-100 px-5 py-5 bg-white">
+        <p class="text-sm text-gray-700 leading-relaxed mb-3">The graph — &quot;We've never seen this issue.&quot; The company's records, traversed on a fixed path — the agent supplies a parameter, never a query. The failure — &quot;never seen it,&quot; while 37 tickets on the same batch sit in the system. The line you'll write — registering the graph tool, turning institutional data into institutional memory . The world that already exists</p>
+<div class="mb-4">
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto font-mono">cloudshell edit ~/support-memory-lab/_shared/store.py  cloudshell edit ~/support-memory-lab/_shared/store.py</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Read the schema: customers, orders, products, batches, tickets, defects — plain relational tables, 40 tickets seeded. The graph is already there. Every company's is. Nobody built a &quot;knowledge graph&quot;; they just ran a business. Iris currently has ONE way to read it — run the trap.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Make sure adk web is running — if you stopped it, relaunch</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot;
+cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Open it via Web Preview → Change port → 8000 . Pick r5_known_issue from the agent dropdown and send: Search the ticket archive for other flickering lamps like mine.  Search the ticket archive for other flickering lamps like mine.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Iris comes back with something like &quot;I found 40 similar tickets. Several mention the LumenGlow v2 flickering after a firmware update, along with some reports for the LumenGlow v1 and Halo Mini. Is your lamp one of those models?&quot; Her phrasing will vary. Look past it at the shape of the answer: 40 matches, spread across three product lines, and not one of them is connected to Maya.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Click the ✓ search_tickets chip and read the matches: three different product lines. Forty results, zero of which the tool can connect to Maya . Similar words are not relationships. This answer sounds helpful and contains nothing actionable. Register the graph tool</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Press Ctrl-C in the adk web terminal, then open the file</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cloudshell edit ~/support-memory-lab/r5_known_issue/agent.py
+cloudshell edit ~/support-memory-lab/r5_known_issue/agent.py root_agent = make_iris([update_ticket, LongRunningFunctionTool(escalate_refund), close_ticket, recall_history, record_damage, search_tickets, # TODO: check_known_issue, ])
+root_agent = make_iris([update_ticket, LongRunningFunctionTool(escalate_refund), close_ticket, recall_history, record_damage, search_tickets, # TODO: check_known_issue, ])</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">📝 Edit file</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Delete the # TODO</p>
+  <pre class="bg-yellow-950 text-yellow-200 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">prefix — the tool joins the list, and its instruction rule wires itself in automatically.</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Before you restart — read what you just registered</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cloudshell edit ~/support-memory-lab/_shared/iris_tools.py
+cloudshell edit ~/support-memory-lab/_shared/iris_tools.py</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Find check_known_issue . It's a fixed, parameterized SQL traversal : order → product → batch → sibling tickets → defects, with exactly one input ( order_number ). The agent never writes the query — it calls a governed tool and quotes what comes back. (Notice _shared/iris_agent.py auto-wires an instruction rule for it the moment it's in the list.)</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Relaunch the server</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot;
+cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Reload the Web Preview tab, pick r5_known_issue from the agent dropdown again, and ask: Is my problem a known issue? My order number is 8841.  Is my problem a known issue? My order number is 8841. Tip: A brand-new session is exactly right here — the reload gives you one, and you need nothing from the conversation you had before. The order number is in the question, and check_known_issue takes that single argument and walks the warehouse tables; it reads no session state and no memory. So if you pressed Ctrl-C earlier, or lost the tab, just relaunch, reload and ask. Nothing to restore. That's the opposite of Task 5, where a fresh session was the point — there the whole question was whether anything survived it. Worth knowing which steps depend on history and which don't. If you do want an earlier conversation back, it's still on disk: click the session title in the top bar and pick it from the list. Sessions live in lumen.db and outlive both the reload and the server.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Iris answers with the known issue and the trail she followed to reach it — something like &quot;It looks like your lamp is part of a batch with a known issue: 'Flicker + base crack (driver defect)'. The fix is firmware 2.1.&quot; , followed by the path itself: Maya → order #8841 → LumenGlow v2 → batch B7 → 37 tickets → Flicker + base crack (driver defect) Her sentence will read differently each run. The path is the part that matters, and every hop in it is a real edge she traversed.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Click the ✓ check_known_issue chip: the JSON carries path , known_issue , fix , connected_tickets: 37 . That path is a citation trail — auditable hop by hop. Two beats to keep. Similar is not connected: text search finds things that sound alike; traversal finds things that are attached — and support, fraud, and recommendations are usually questions about attachment. The agent never writes the query: one governed traversal, one parameter — deterministic, auditable, privacy-boundable, versus generating SQL against your warehouse and hoping the joins are right.</span></div>
+      </div>
+    </div>
+
+    <div class="mb-4 border border-gray-200 rounded-2xl overflow-hidden">
+      <button onclick="toggleTask('task9')" 
+        class="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="w-7 h-7 rounded-full bg-gcp-blue text-white text-xs font-bold flex items-center justify-center flex-shrink-0">9</span>
+          <span class="text-sm font-semibold text-gray-900">The warehouse, part 1 — the company's data</span>
+        </div>
+        <span id="task9-arrow" class="text-gray-400 text-xs transition-transform duration-200">▼</span>
+      </button>
+      <div id="task9" class="hidden border-t border-gray-100 px-5 py-5 bg-white">
+        <p class="text-sm text-gray-700 leading-relaxed mb-3">The warehouse, part 1 — the company's data The same records, moved into the warehouse the rest of the company already queries. Task 8's graph lived in a lab SQLite file. A real company's institutional memory lives in its warehouse — and your agent should read it there, not from a toy. Over three short tasks you'll load structured tables from Cloud Storage into BigQuery, generate embeddings inside the warehouse, and hand both to Iris as governed tools. This task: the data.</p>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">The Lumen world ships as plain CSVs in warehouse/ . Look at one first, in your second terminal tab</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cloudshell edit ~/support-memory-lab/warehouse/tickets.csv
+cloudshell edit ~/support-memory-lab/warehouse/tickets.csv</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>Three columns: id, order_id, text . Structured data, exactly as a support system would export it.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Now provision the warehouse. One script, because none of what it does is the lesson</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab ./setup_warehouse.sh
+cd ~/support-memory-lab ./setup_warehouse.sh</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>It narrates every step with ==&gt; as it goes, and finishes with ✅ Warehouse ready reporting 40 tickets at 3072 dimensions. Takes a couple of minutes, mostly waiting on the model and the embeddings. Here is exactly what it just did, so nothing is a black box: Step Why Enabled BigQuery, BigQuery Connection, Cloud Storage APIs nothing works without them Created gs://&lt;project&gt;-lumen and uploaded the six CSVs warehouses load from object storage Created the lumen dataset in us-west1 one region for everything — see below Loaded six tables with explicit schemas customers , products , batches , orders , tickets , defects Created a CLOUD_RESOURCE connection and granted its service account roles/aiplatform.user so BigQuery can call Vertex on your behalf Created the lumen.embedder remote model, retrying while IAM propagates the step that used to fail for everyone Embedded all 40 tickets into lumen.ticket_embeddings meaning computed beside the rows — see Read more below Tip: Two details in that script worth stealing. Explicit schemas, not --autodetect . These CSVs are all-STRING, and autodetect can't tell a header row from data in that case — it names your columns string_field_0 , string_field_1 , and every query in the next two tasks breaks. One pinned region. Bucket, dataset, connection and model must all agree, and a mismatch doesn't fail where you made it — it surfaces tasks later as was not found in location . The script sets REGION=&quot;us-west1&quot; once and uses it everywhere. Re-running it is safe: it reuses anything that already exists and replaces the table loads.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>And see it with your own eyes — in the Google Cloud console , a separate browser tab from Cloud Shell and Web Preview. Open BigQuery Studio , check the top bar shows your qwiklabs-gcp-… project, then in the Explorer pane expand your project → lumen : six tables. Click tickets → Preview : Maya's world, as warehouse rows. Tip: Cloud SQL instead? The same two tools at the end of this arc work against Cloud SQL for PostgreSQL with pgvector — and DatabaseSessionService can put your sessions there too. This lab uses BigQuery because the next step happens inside the warehouse: no data leaves to get embedded. Read more: how those vectors got there The script did this part, so nothing below is a step — but the three mechanisms are the reason the warehouse can answer a question no keyword matches, and they're worth the ninety seconds.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>A connection is an identity. bq mk --connection --connection_type=CLOUD_RESOURCE creates a service account named bqcx-…@gcp-sa-bigquery-condel.iam.gserviceaccount.com , born with the connection and holding no permissions at all . BigQuery uses it to call Vertex on your behalf, so it has to be granted that right: gcloud projects add-iam-policy-binding &quot; $PROJECT &quot; \ --member= &quot;serviceAccount: $CONN_SA &quot; --role=roles/aiplatform.user --condition=None  gcloud projects add-iam-policy-binding &quot;$PROJECT&quot; \ --member=&quot;serviceAccount:$CONN_SA&quot; --role=roles/aiplatform.user --condition=None</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>A remote model is a handle, not a copy. Nothing is downloaded. The model is a name in your dataset pointing at a Vertex endpoint through that connection: CREATE OR REPLACE MODEL lumen.embedder REMOTE WITH CONNECTION `us - west1.vertex_conn` OPTIONS (ENDPOINT = &quot;gemini-embedding-001&quot;)  CREATE OR REPLACE MODEL lumen.embedder REMOTE WITH CONNECTION `us-west1.vertex_conn` OPTIONS (ENDPOINT = &quot;gemini-embedding-001&quot;)</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>The embeddings never left the warehouse. With that handle in place, one statement turns forty ticket rows into forty vectors in the same dataset — no export, no pipeline, no separate vector database: CREATE OR REPLACE TABLE lumen.ticket_embeddings AS SELECT id, content, ml_generate_embedding_result AS embedding FROM ML.GENERATE_EMBEDDING(MODEL lumen.embedder, ( SELECT id, text AS content FROM lumen.tickets))  CREATE OR REPLACE TABLE lumen.ticket_embeddings AS SELECT id, content, ml_generate_embedding_result AS embedding FROM ML.GENERATE_EMBEDDING(MODEL lumen.embedder, (SELECT id, text AS content FROM lumen.tickets)) That is the whole &quot;in place&quot; claim: ML.GENERATE_EMBEDDING called Vertex from inside BigQuery and wrote the results back beside the rows they came from. A vector here is just a list of 3072 numbers describing what a sentence means , so two tickets land near each other when they describe the same problem in different words — which is exactly what InMemoryMemoryService could not do back in Task 5, where it scored memories by counting shared words.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>See it: in BigQuery Studio , Explorer pane → your project → lumen → ticket_embeddings . Schema shows embedding as a REPEATED FLOAT ; Details puts the row count at 40 . Your tickets and their vectors are one table, sitting in the same dataset as customers and orders . Tip: Why the script retries CREATE MODEL . It is the first statement that actually exercises the IAM grant, and IAM is eventually consistent — so for a minute or so after a grant that worked perfectly it fails with does not have the permission to access or use the endpoint , naming the bqcx-… account and asking for the Agent Platform User role. That role is not missing. &quot;Agent Platform User&quot; is just the current display name of roles/aiplatform.user , renamed when Vertex AI moved under the Gemini Enterprise Agent Platform branding — same role ID, already granted. The script polls through the propagation window instead of handing you that error. If it ever does stop there, re-running it is safe.</span></div>
+      </div>
+    </div>
+
+    <div class="mb-4 border border-gray-200 rounded-2xl overflow-hidden">
+      <button onclick="toggleTask('task10')" 
+        class="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
+        <div class="flex items-center gap-3">
+          <span class="w-7 h-7 rounded-full bg-gcp-red text-white text-xs font-bold flex items-center justify-center flex-shrink-0">10</span>
+          <span class="text-sm font-semibold text-gray-900">The warehouse, part 2 — Iris reads it</span>
+        </div>
+        <span id="task10-arrow" class="text-gray-400 text-xs transition-transform duration-200">▼</span>
+      </button>
+      <div id="task10" class="hidden border-t border-gray-100 px-5 py-5 bg-white">
+        <p class="text-sm text-gray-700 leading-relaxed mb-3">The warehouse, part 2 — Iris reads it Both shapes, one agent: a vector search for meaning and a join for connection.</p>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Read the two governed queries first</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cloudshell edit ~/support-memory-lab/r6_warehouse/tools.py
+cloudshell edit ~/support-memory-lab/r6_warehouse/tools.py</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>warehouse_search(text) is the VECTOR_SEARCH you just typed, parameterized. warehouse_known_issue(order_number) is Task 8's traversal as a BigQuery join. The agent never writes SQL — both queries are fixed; the model only supplies one parameter.</span></div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">cloudshell edit ~/support-memory-lab/r6_warehouse/agent.py  cloudshell edit ~/support-memory-lab/r6_warehouse/agent.py root_agent = make_iris([update_ticket, LongRunningFunctionTool(escalate_refund), close_ticket, recall_history, record_damage, warehouse_known_issue, # TODO</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">warehouse_search, ])
+root_agent = make_iris([update_ticket, LongRunningFunctionTool(escalate_refund), close_ticket, recall_history, record_damage, warehouse_known_issue, # TODO: warehouse_search, ])</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">📝 Edit file</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Delete the # TODO</p>
+  <pre class="bg-yellow-950 text-yellow-200 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">prefix.</pre>
+</div>
+<div class="mb-4">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">💻 Terminal</span>
+  </div>
+  <p class="text-sm text-gray-700 mb-2">Launch adk web (same command as always)</p>
+  <pre class="bg-slate-800 text-green-300 rounded-lg px-4 py-3 text-xs overflow-x-auto leading-relaxed font-mono">cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH= $PWD adk web . --allow_origins= &quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file:// $PWD /artifacts_store&quot;
+cd ~/support-memory-lab source .venv/bin/activate PYTHONPATH=$PWD adk web . --allow_origins=&quot;*&quot; \ --session_service_uri &quot;sqlite:///lumen.db&quot; \ --artifact_service_uri &quot;file://$PWD/artifacts_store&quot;</pre>
+</div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Web Preview → port 8000 → pick r6_warehouse and send: Have other customers had lamps dying on them at night?  Have other customers had lamps dying on them at night?</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>The warehouse_search chip fires — click it: the matches carry distance scores, and they're the evening-flicker tickets, found by meaning . Then: Is my problem a known issue? My order number is 8841.  Is my problem a known issue? My order number is 8841.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2"><span>👀</span><span>The warehouse_known_issue chip returns the same citation path as Task 8 — Maya -&gt; order #8841 -&gt; LumenGlow v2 -&gt; batch B7 -&gt; 37 tickets -&gt; … — except now it walked BigQuery tables you loaded yourself . Tip: The full production shape, assembled: semantic entry finds where to look ( VECTOR_SEARCH ) → the traversal finds what's connected (the join) → the model answers with the trail. Both reads live in the warehouse, next to the data — and CREATE PROPERTY GRAPH is a zero-copy view that turns the join side into first-class graph queries when you outgrow it. Task 11. The desk goes to production (optional) This task is optional. Every load-bearing line is already written — all five memory mechanisms work, and nothing below adds a new one. What's here is the synthesis: Maya's story finished inside the product, and the one page of code that proves the design wasn't tied to any single UI. Worth ten minutes if you have them. If you're low on lab time, skip to Congratulations! — you haven't missed a mechanism. You've driven Iris through a developer tool all lab long — while the product sat one port over. Time to look under its hood. The desk has been running since Task 4, and its Approve button has already earned its keep. Finish Maya's story in it.</span></div>
+<div class="mb-3 flex gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2"><span>🌐</span><span>Web Preview → Change port → 5173 (if the servers are down, Task 4 has the two commands: uvicorn … --port 8080 and npm run dev ). Click 📎 (bottom-left) → choose the lamp_photo.jpg you saved in Task 7 → t</span></div>
+      </div>
+    </div>
+    </div>
+
+    <!-- Congratulations -->
+    <div class="bg-gcp-green/10 border border-gcp-green/30 rounded-2xl p-6 text-center mt-6">
+      <div class="text-4xl mb-2">🎉</div>
+      <h2 class="text-lg font-bold text-gcp-green mb-1">Congratulations!</h2>
+      <p class="text-sm text-gray-600">You've climbed all eight memory rungs — from stateless goldfish to managed Vertex memory.</p>
+    </div>
+
+  </main>
+
+  <script>
+    function toggleTask(id) {
+      const el = document.getElementById(id);
+      const arrow = document.getElementById(id + '-arrow');
+      el.classList.toggle('hidden');
+      arrow.style.transform = el.classList.contains('hidden') ? '' : 'rotate(180deg)';
+    }
+    // Open Task 1 by default
+    toggleTask('task1');
+  </script>
+</body>
+</html>

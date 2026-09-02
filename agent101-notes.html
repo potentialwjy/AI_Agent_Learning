@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your First Agent — Summoning at Agent Valley 学习笔记</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: #333;
+    background: #f5f5f5;
+  }
+
+  /* ── 顶部标题栏 ── */
+  .header {
+    background: #1a73e8;
+    color: white;
+    padding: 20px 32px;
+  }
+  .header h1 { font-size: 22px; font-weight: 600; }
+  .header p  { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+  /* ── 布局 ── */
+  .layout { display: flex; min-height: calc(100vh - 72px); }
+
+  /* ── 左侧标签列 ── */
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: white;
+    border-right: 1px solid #e0e0e0;
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sidebar-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    padding: 0 20px 8px;
+  }
+  .tab-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: #555;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+    line-height: 1.4;
+  }
+  .tab-btn:hover  { background: #f0f4ff; color: #1a73e8; }
+  .tab-btn.active { background: #e8f0fe; color: #1a73e8; border-left-color: #1a73e8; font-weight: 600; }
+  .tab-num {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: #555;
+    font-size: 11px;
+    text-align: center;
+    line-height: 20px;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+  .tab-btn.active .tab-num { background: #1a73e8; color: white; }
+
+  /* ── 右侧内容 ── */
+  .content { flex: 1; padding: 32px 48px; max-width: 860px; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── 内容元素 ── */
+  h2.page-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+  }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 28px; }
+
+  .intro-box {
+    background: #e8f0fe;
+    border-left: 4px solid #1a73e8;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    font-size: 14.5px;
+  }
+  .intro-box strong { color: #1a73e8; }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 32px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e8f0fe;
+  }
+  h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    margin: 20px 0 8px;
+  }
+  p { margin-bottom: 12px; }
+
+  code {
+    background: #f1f3f4;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: "Roboto Mono", "SF Mono", Consolas, monospace;
+    font-size: 13px;
+    color: #c5221f;
+  }
+  pre {
+    background: #282c34;
+    color: #abb2bf;
+    border-radius: 6px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin: 12px 0 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    font-family: "Roboto Mono", "SF Mono", Consolas, monospace;
+  }
+  pre .kw  { color: #c678dd; }
+  pre .str { color: #98c379; }
+  pre .cm  { color: #7f848e; font-style: italic; }
+  pre .fn  { color: #61afef; }
+  pre .var { color: #e06c75; }
+  pre .num { color: #d19a66; }
+
+  .callout {
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .callout.tip   { background: #e6f4ea; border-left: 4px solid #34a853; }
+  .callout.warn  { background: #fef7e0; border-left: 4px solid #fbbc04; }
+  .callout.info  { background: #e8f0fe; border-left: 4px solid #4285f4; }
+  .callout.danger{ background: #fce8e6; border-left: 4px solid #ea4335; }
+  .callout-title { font-weight: 700; margin-bottom: 4px; }
+  .callout.tip   .callout-title { color: #137333; }
+  .callout.warn  .callout-title { color: #9c6e00; }
+  .callout.info  .callout-title { color: #1a73e8; }
+  .callout.danger .callout-title { color: #c5221f; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+  th {
+    background: #1a73e8;
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td { padding: 9px 14px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8f9fa; }
+
+  .concept-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 16px 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .concept-card .label {
+    display: inline-block;
+    background: #1a73e8;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    letter-spacing: .5px;
+  }
+
+  .step-list { counter-reset: step; list-style: none; padding: 0; }
+  .step-list li {
+    counter-increment: step;
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+  }
+  .step-list li::before {
+    content: counter(step);
+    min-width: 26px;
+    height: 26px;
+    background: #1a73e8;
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  ul.bullets { padding-left: 22px; margin-bottom: 14px; }
+  ul.bullets li { margin-bottom: 6px; }
+
+  .nav-btns {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+  }
+  .nav-btn {
+    padding: 9px 20px;
+    border-radius: 4px;
+    border: 1px solid #1a73e8;
+    background: white;
+    color: #1a73e8;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .nav-btn:hover { background: #1a73e8; color: white; }
+  .nav-btn.primary { background: #1a73e8; color: white; }
+  .nav-btn.primary:hover { background: #1557b0; }
+  .nav-btn:disabled { opacity: .35; cursor: default; }
+
+  .wire-diagram {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  .wire-box {
+    display: inline-block;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .wb-blue  { background: #e8f0fe; color: #1a73e8; border: 2px solid #1a73e8; }
+  .wb-green { background: #e6f4ea; color: #137333; border: 2px solid #34a853; }
+  .wb-orange{ background: #fef3e0; color: #9c6e00; border: 2px solid #fbbc04; }
+  .wb-red   { background: #fce8e6; color: #c5221f; border: 2px solid #ea4335; }
+  .wire-arrow { color: #aaa; font-size: 20px; margin: 0 12px; vertical-align: middle; }
+  .wire-label { font-size: 11px; color: #888; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Your First Agent — Summoning at Agent Valley</h1>
+  <p>Google Codelabs · ADK 2 · 初学者学习笔记 · 2026</p>
+</div>
+
+<div class="layout">
+
+  <!-- ── 左侧导航 ── -->
+  <nav class="sidebar">
+    <div class="sidebar-title">章节导航</div>
+    <button class="tab-btn active" onclick="showTab(0)"><span class="tab-num">1</span>整体概述</button>
+    <button class="tab-btn" onclick="showTab(1)"><span class="tab-num">2</span>环境搭建</button>
+    <button class="tab-btn" onclick="showTab(2)"><span class="tab-num">3</span>第一个 Agent</button>
+    <button class="tab-btn" onclick="showTab(3)"><span class="tab-num">4</span>第一个工具</button>
+    <button class="tab-btn" onclick="showTab(4)"><span class="tab-num">5</span>体验 The Valley</button>
+    <button class="tab-btn" onclick="showTab(5)"><span class="tab-num">6</span>第二个工具</button>
+    <button class="tab-btn" onclick="showTab(6)"><span class="tab-num">7</span>Callback 机制</button>
+    <button class="tab-btn" onclick="showTab(7)"><span class="tab-num">8</span>总结</button>
+  </nav>
+
+  <!-- ── 右侧内容 ── -->
+  <main class="content">
+
+    <!-- ═══════════════════════════════════════ TAB 0: 整体概述 ═══ -->
+    <div class="tab-pane active" id="tab-0">
+      <h2 class="page-title">整体概述</h2>
+      <p class="subtitle">Lab 是什么 · 学什么 · 整体地图</p>
+
+      <div class="intro-box">
+        <strong>一句话概括：</strong>这个 Lab 带你从零造一个能"召唤生物"的 AI Agent，每一章加一个新部件，同时告诉你数据是怎么在部件之间流动的。全程只需要写<strong>两行代码</strong>——其余的时间都在读、运行、观察。
+      </div>
+
+      <h3>Lab 的核心思想</h3>
+      <p>Agent 不是一个神奇的黑盒，它是<strong>几个小部件 + 连接它们的"线"</strong>。这个 Lab 一次只加一个部件，让你清楚地看到每根线是如何工作的。</p>
+
+      <table>
+        <tr><th>章节</th><th>加入的部件</th><th>新出现的"线"（数据如何流动）</th></tr>
+        <tr><td>第3章</td><td>模型 + 指令</td><td>还没有线——它只能说话</td></tr>
+        <tr><td>第4章</td><td>一个工具（函数）</td><td>模型 → 工具</td></tr>
+        <tr><td>第6章</td><td>第二个工具</td><td>工具 → Agent（通过共享字典 state）</td></tr>
+        <tr><td>第7章</td><td>Callback 回调</td><td>你自己的代码 → 伸手进那根线，直接修改它</td></tr>
+      </table>
+
+      <div class="callout info">
+        <div class="callout-title">💡 为什么第5章不在表里？</div>
+        这是故意的。第5章（"体验 The Valley"）没有新概念，纯粹让你去玩成品 5 分钟，但会留下两个你还无法解释的现象，答案分别在第6章和第7章。
+      </div>
+
+      <h3>两个界面，刻意区分</h3>
+      <div class="concept-card">
+        <div class="label">adk web</div>
+        <p><strong>工作台</strong>——Agent 的原始形态，能看到它"在想什么"：每一次工具调用、每一个状态变化都是透明的。你在这里调试和理解。</p>
+      </div>
+      <div class="concept-card">
+        <div class="label">Agent Valley</div>
+        <p><strong>成品舞台</strong>——同样的工具，套上了产品外壳。你先在工作台看懂原理，再来这里体验完整产品，然后回去发现"原来那些漂亮的产品效果，背后就是那几行代码"。</p>
+      </div>
+
+      <h3>仓库结构一览</h3>
+      <table>
+        <tr><th>目录</th><th>内容</th></tr>
+        <tr><td><code>grove/</code></td><td>你亲手搭建的 Agent：第3章起从零开始，第4章和第6章各做一次编辑</td></tr>
+        <tr><td><code>forge/</code></td><td>成品 Agent 用的完整工具集和 Callback 控制逻辑</td></tr>
+        <tr><td><code>site/</code></td><td>Agent Valley 前端界面本身</td></tr>
+      </table>
+
+      <h3>你需要准备的</h3>
+      <ul class="bullets">
+        <li>一个有账单权限的 Google 账号（或开通免费试用）</li>
+        <li>浏览器——所有操作都在 Cloud Shell 里完成，<strong>不需要在本机安装任何东西</strong></li>
+        <li>不需要 API Key——通过 Vertex AI 用你自己的 GCP 账号认证</li>
+      </ul>
+
+      <div class="nav-btns">
+        <button class="nav-btn" disabled>← 上一章</button>
+        <button class="nav-btn primary" onclick="showTab(1)">下一章：环境搭建 →</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ TAB 1: 环境搭建 ═══ -->
+    <div class="tab-pane" id="tab-1">
+      <h2 class="page-title">环境搭建（Setup）</h2>
+      <p class="subtitle">把所有工具跑起来，最后看到 PREFLIGHT GREEN</p>
+
+      <div class="intro-box">
+        <strong>这章在做什么：</strong>纯操作。创建 GCP 项目、安装依赖、配置 Vertex AI、最后用健康检查脚本验证一切正常。没有新概念，但每一步都不能跳过。
+      </div>
+
+      <h3>六个步骤详解</h3>
+
+      <h4>步骤 1 · 确认账号有账单权限</h4>
+      <p>在一切开始之前，确保你登录的 Google 账号<strong>已经开通账单</strong>。如果没有，进入 <code>console.cloud.google.com/freetrial</code> 开启免费试用即可，这会创建一个账单账户。</p>
+      <div class="callout warn">
+        <div class="callout-title">⚠️ 最常见的错误</div>
+        Cloud Shell 登录的账号 ≠ 有账单权限的账号。先用 <code>gcloud auth list</code> 确认 Cloud Shell 里带 <code>*</code> 的账号，就是步骤1里有账单的那个账号。
+      </div>
+
+      <h4>步骤 2 · 打开 Cloud Shell</h4>
+      <p>点 Google Cloud 控制台顶部的终端图标（Activate Cloud Shell），再点 Open Editor 打开编辑器。所有命令都在编辑器底部的终端里运行。</p>
+
+      <h4>步骤 3 · Clone 仓库</h4>
+      <pre>cd ~
+git clone https://github.com/cuppibla/agent-valley-lab.git
+cd ~/agent-valley-lab</pre>
+
+      <h4>步骤 4 · 创建 GCP 项目</h4>
+      <pre>cd ~/agent-valley-lab
+./setup_project.sh</pre>
+      <p>这个脚本做了四件事：找到你的账单账户 → 创建一个叫 <code>agent-valley-XXXX</code> 的项目 → 把这个项目设为默认 → 等待 IAM 权限传播完成（最多2分钟）。</p>
+      <div class="callout info">
+        <div class="callout-title">💡 为什么要"等待"？</div>
+        刚创建的 GCP 项目在最初几秒内 IAM 策略还没传播完，调用会返回 403。脚本在这里帮你等好了，这样后面的模型调用就不会撞上这个坑。
+      </div>
+
+      <h4>步骤 5 · 安装依赖并指向 Vertex AI</h4>
+      <pre>cd ~/agent-valley-lab
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.local/bin/env
+export GOOGLE_GENAI_USE_VERTEXAI=True
+export GOOGLE_CLOUD_PROJECT=$(gcloud config get project)
+export GOOGLE_CLOUD_LOCATION=global
+./setup_codelab.sh</pre>
+      <p><code>setup_codelab.sh</code> 做了什么：</p>
+      <table>
+        <tr><th>动作</th><th>说明</th></tr>
+        <tr><td>启用 API</td><td>在你的项目上开启 Vertex AI API</td></tr>
+        <tr><td>创建虚拟环境</td><td><code>uv venv</code> + <code>uv sync</code> 安装 google-adk 等依赖</td></tr>
+        <tr><td>写 .env 文件</td><td>把三个环境变量写入 <code>.env</code>（ADK 会优先读这个文件，而不是你 export 的变量）</td></tr>
+        <tr><td>模型验证</td><td>真实调用一次 Gemini，确认项目配置正确</td></tr>
+      </table>
+      <div class="callout warn">
+        <div class="callout-title">⚠️ .env 文件的优先级</div>
+        ADK 启动时会加载 <code>.env</code> 文件，<strong>覆盖</strong>你在 shell 里 export 的变量。所以真正起作用的是 <code>.env</code>，不是你命令行里的 export。<code>setup_codelab.sh</code> 已经帮你把正确的值写进去了。
+      </div>
+
+      <h4>步骤 6 · 运行健康检查</h4>
+      <pre>cd ~/agent-valley-lab
+uv run python scripts/preflight.py</pre>
+      <p>正常情况每一行都是 ✓，最后出现 <code>PREFLIGHT GREEN</code>。其中有一行会显示 <code>grove · 0 tools — no edits yet</code>，这是<strong>正确的</strong>——"还没有工具"正是下一章要解决的问题。</p>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="showTab(0)">← 整体概述</button>
+        <button class="nav-btn primary" onclick="showTab(2)">下一章：第一个 Agent →</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ TAB 2: 第一个 Agent ═══ -->
+    <div class="tab-pane" id="tab-2">
+      <h2 class="page-title">Chapter 1 · 你的第一个 Agent</h2>
+      <p class="subtitle">最小可用的 Agent 长什么样，没有工具意味着什么</p>
+
+      <div class="intro-box">
+        <strong>这章学什么：</strong>读懂世界上最小的 Agent（只有4行），然后亲眼看到"没有工具的 Agent 只是一段被认真交代过任务的对话"。<br>
+        <strong>要做的事：</strong>启动 adk web，发两句话，看 State 标签页。<strong>不需要改代码。</strong>
+      </div>
+
+      <h3>启动 Dev UI</h3>
+      <pre>cd ~/agent-valley-lab
+uv run adk web . --allow_origins="*"</pre>
+      <p>通过 <strong>Web Preview → Change port → 8000</strong> 打开界面，选择 <code>grove</code>（不是 <code>grove_locked</code>）。</p>
+      <div class="callout warn">
+        <div class="callout-title">⚠️ 为什么必须加 --allow_origins="*"？</div>
+        Cloud Shell Web Preview 会用一个 <code>https://8000-cs-....cloudshell.dev</code> 形式的域名代理你的请求，这个域名和 ADK Dev UI 内部认为自己在的地址 <code>http://127.0.0.1:8000</code> 不一致。ADK 会对每个 POST 请求做 CORS 检查——不加这个参数，界面能加载，但你发第一条消息就会收到 403 Forbidden。
+      </div>
+
+      <h3>读懂这个 Agent</h3>
+      <p>打开 <code>grove/agent.py</code>，忽略注释，有效的代码只有这4行：</p>
+      <pre><span class="var">root_agent</span> = <span class="fn">LlmAgent</span>(
+    <span class="var">name</span>=<span class="str">"grove"</span>,
+    <span class="var">model</span>=<span class="str">"gemini-3-flash-preview"</span>,
+    <span class="var">instruction</span>=<span class="var">INSTRUCTION</span>,
+)</pre>
+      <table>
+        <tr><th>参数</th><th>作用</th></tr>
+        <tr><td><code>name</code></td><td>Dev UI 里显示的名字</td></tr>
+        <tr><td><code>model</code></td><td>背后用哪个 AI 大脑（这里是 Gemini 3 Flash）</td></tr>
+        <tr><td><code>instruction</code></td><td>它的"工作说明书"——告诉它自己是谁、能做什么。向上滚动查看 <code>INSTRUCTION</code>：7句话描述了"我是一个保管着魔法熔炉的人，旅行者描述什么我就召唤什么可爱动物"</td></tr>
+      </table>
+      <p>注意：<strong>没有 tools 参数</strong>。这是这一章最关键的事实。</p>
+
+      <h3>动手试验</h3>
+      <p>在 Dev UI 里输入：</p>
+      <pre>Summon a fox familiar for me.</pre>
+      <p>你会收到一段美丽的文字描述——可能是一只穿着毛衣、捧着茶杯的青蛙。然后再问：</p>
+      <pre>Show me it.</pre>
+      <p>你得到的依然是文字。没有图片，没有文件，没有任何真实存在的东西被创造出来。</p>
+      <p>点击 <strong>State 标签页</strong>——它是空的。</p>
+
+      <h3>这一章的结论</h3>
+      <div class="concept-card">
+        <div class="label">核心认知</div>
+        <p>模型的<strong>唯一输出通道是文字</strong>。"它说它做了某件事"和"它真的做了这件事"，从文字上看起来<strong>完全一样</strong>。这不是 bug，不是坏模型——这是模型的本质限制。</p>
+        <p style="margin-top: 10px; font-weight: 600;">没有工具的 Agent，是一段被认真交代过任务的对话，仅此而已。</p>
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="showTab(1)">← 环境搭建</button>
+        <button class="nav-btn primary" onclick="showTab(3)">下一章：第一个工具 →</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ TAB 3: 第一个工具 ═══ -->
+    <div class="tab-pane" id="tab-3">
+      <h2 class="page-title">Chapter 2 · 你的第一个工具</h2>
+      <p class="subtitle">给 Agent 加上一个函数，然后跟踪数据的完整流向</p>
+
+      <div class="intro-box">
+        <strong>这章学什么：</strong>一行改动，Agent 从"只会说"变成"真的做"。重点是理解模型、runtime、工具三者之间的分工，以及图片到底是哪来的。<br>
+        <strong>要做的事：</strong>删掉一个 <code>#</code> 符号，重启 Dev UI，追踪调用链。
+      </div>
+
+      <h3>唯一的代码改动</h3>
+      <p>打开 <code>grove/agent.py</code>，找到这一行，删掉行首的 <code># </code>：</p>
+      <pre><span class="var">root_agent</span> = <span class="fn">LlmAgent</span>(
+    <span class="var">name</span>=<span class="str">"grove"</span>,
+    <span class="var">model</span>=<span class="str">"gemini-3-flash-preview"</span>,
+    <span class="var">instruction</span>=<span class="var">INSTRUCTION</span>,
+
+    <span class="cm"># 删掉下面这行的 "# "，然后保存</span>
+    <span class="var">tools</span>=[<span class="fn">cast_candidates</span>],
+)</pre>
+      <p>保存，然后重启 Dev UI（Ctrl+C 后重新运行 <code>uv run adk web . --allow_origins="*"</code>）。</p>
+
+      <h3>再次发送同样的请求</h3>
+      <pre>something cozy that likes rain and drinks tea</pre>
+      <p>这次完全不同：出现一个 <code>cast_candidates</code> 调用气泡，停顿约 12 秒，然后弹出一张<strong>真实存在的图片</strong>。</p>
+
+      <h3>关键问题：工具调用的本质是什么？</h3>
+      <p>点开那个 <code>cast_candidates</code> 气泡，你会看到 <strong>4 条消息</strong>。把它们拆开：</p>
+      <table>
+        <tr><th>步骤</th><th>谁做的</th><th>做了什么</th></tr>
+        <tr><td>1</td><td>你</td><td>发了一句话：<em>"something cozy that likes rain…"</em></td></tr>
+        <tr><td>2</td><td>模型（LLM）</td><td>输出一条消息，说"我要调用 cast_candidates，参数是这段视觉描述"——把你的几个词扩写成完整描述</td></tr>
+        <tr><td>3</td><td>Runtime（ADK 框架）</td><td>读到模型的输出，真正调用 Python 函数，等待返回</td></tr>
+        <tr><td>4</td><td>模型</td><td>收到函数的返回值，生成最终回复</td></tr>
+      </table>
+      <div class="callout danger">
+        <div class="callout-title">🔑 最重要的认知</div>
+        <strong>第2步里，模型的输出仍然只是一条文字消息。</strong>它做的是"决定调用什么、写好参数"，但它自己什么都没执行。真正让函数跑起来的是 ADK Runtime（第3步）。<br><br>
+        <strong>模型负责"决定 + 组织语言"，Runtime 负责"真正执行"。这两者是分开的。</strong>
+      </div>
+
+      <h3>函数的"契约"——docstring 是给模型看的</h3>
+      <p>打开 <code>forge/agent/tools.py</code>，找到 <code>cast_candidates</code>：</p>
+      <pre><span class="kw">async def</span> <span class="fn">cast_candidates</span>(<span class="var">description</span>: <span class="fn">str</span>, <span class="var">tool_context</span>: <span class="fn">ToolContext</span>) -> <span class="fn">dict</span>:
+    <span class="str">"""Draw the familiar a traveler described.
+
+    Args:
+        description: What the creature looks like — species, colours, mood, era.
+    """</span></pre>
+      <p>模型能看到的关于这个函数的信息，<strong>只有三样</strong>：函数名、参数签名、docstring。没有函数体，没有实现细节。这就是为什么要用清晰的大白话写 docstring——你是在给一个"读者"（模型）写说明书，不是在给编译器写注释。写得含糊，模型调用时就会出错或乱猜参数。</p>
+
+      <h3>图片从哪来的？——完整调用链</h3>
+      <p>这是大多数教程会跳过的部分：</p>
+      <ol class="step-list">
+        <li><strong>grove 本身不会画画。</strong>它是纯文本模型（gemini-3-flash-preview），文字进、文字出。</li>
+        <li><strong>真正画图的是另一个模型。</strong>在 <code>cast_candidates</code> 函数<em>内部</em>，调用了 <code>gemini-2.5-flash-image</code>——一个专门的图像生成模型，和 grove 完全独立。</li>
+        <li><strong>画风是靠"喂图片"实现的。</strong>打开 <code>forge/agent/backends.py</code>，找 <code>_style_refs()</code>：每次请求都附带 4 张示例图作为美术风格的锚点，这是纯文字提示词很难达到的效果。</li>
+        <li><strong>模型自己从未看到生成的图片。</strong>图片字节被 <code>save_artifact()</code> 存起来，回传给 grove 的只是一个字符串 <code>"candidate_0.png"</code>——小到能塞进一个 prompt 里。</li>
+      </ol>
+
+      <div class="wire-diagram">
+        <span class="wire-box wb-blue">grove<br><small>文本模型</small></span>
+        <span class="wire-arrow">→</span>
+        <span class="wire-box wb-green">cast_candidates()<br><small>Python 函数</small></span>
+        <span class="wire-arrow">→</span>
+        <span class="wire-box wb-orange">gemini-2.5-flash-image<br><small>图像生成模型</small></span>
+        <div class="wire-label" style="margin-top:12px">grove 没有变成多模态——它只是拿到了一扇通往图像模型的门</div>
+      </div>
+
+      <h3>为什么用两个独立模型？</h3>
+      <ul class="bullets">
+        <li>可以单独替换"画图的部分"，而不用动"思考的部分"</li>
+        <li>只有真正调用画图的那一步才计图像生成的费用</li>
+        <li>两个模型可以独立更新、独立优化</li>
+      </ul>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="showTab(2)">← 第一个 Agent</button>
+        <button class="nav-btn primary" onclick="showTab(4)">下一章：体验 The Valley →</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ TAB 4: The Valley ═══ -->
+    <div class="tab-pane" id="tab-4">
+      <h2 class="page-title">Chapter 3 · 体验 The Valley</h2>
+      <p class="subtitle">不加新概念，去玩 5 分钟，然后带着两个悬念回来</p>
+
+      <div class="intro-box">
+        <strong>这章在做什么：</strong>没有代码改动，没有新概念。用成品感受你已经学过的工具，同时故意留下两个你目前还无法解释的现象，它们的答案分别在第6章和第7章。
+      </div>
+
+      <h3>启动 Agent Valley</h3>
+      <p>保持 adk web 继续运行（Tab 1），开一个新 Terminal Tab（Tab 2）：</p>
+      <pre>cd ~/agent-valley-lab
+bash valley.sh</pre>
+      <p>通过 <strong>Web Preview → Change port → 3200</strong> 进入 Agent Valley，点 <strong>▶ Start</strong>，再点 <strong>The Summoning Grove</strong>。</p>
+
+      <h3>操作指引</h3>
+      <ol class="step-list">
+        <li>选一种动物类型，加一个独特描述，召唤它</li>
+        <li>给它起名，认领它（Name it. Claim it.）</li>
+        <li>点界面里的建议标签，比如 <strong>a golden crown</strong>——注意：它不会直接执行，而是把这句话填进输入框。你可以改词，然后发送</li>
+        <li>重复 3-4 次，给它换不同的装扮</li>
+      </ol>
+
+      <h3>三件事，边玩边观察</h3>
+      <div class="concept-card">
+        <div class="label">观察 1</div>
+        <p>你打的每一句话，走的还是你在第4章读过的那套代码——同样的 <code>cast_candidates</code> 函数，同样的 docstring。</p>
+      </div>
+      <div class="concept-card">
+        <div class="label">观察 2：建议是"写词"，不是"按按钮"</div>
+        <p>按钮本身没有"意图"——模型从一个按钮点击里什么都读不出来。一句完整的话才携带意图，这是模型能参与这个循环的唯一理由。</p>
+      </div>
+      <div class="concept-card">
+        <div class="label">观察 3</div>
+        <p>山谷本身完全不依赖你之前的代码编辑——它有自己的 Agent（<code>forge/agent/lanes.py</code>），从一开始就能独立运行。</p>
+      </div>
+
+      <h3>悬念一：右侧追踪面板里的日志</h3>
+      <p>发送一个装扮请求时，右侧面板会出现类似这样的内容：</p>
+      <pre>before_model   inject character_sheet
+after_model    guard: pass
+before_tool    identity lock → candidate_0.png
+after_tool     + a golden crown  ·  outfit: a golden crown</pre>
+      <p>一句话触发了 6 行日志。有东西在<strong>悄悄写状态</strong>，有东西在<strong>帮你选图片</strong>——这是什么？数据写到哪里去了？</p>
+      <p>→ <strong>答案在第6章</strong>（共享的 state 字典）</p>
+
+      <h3>悬念二：脸为什么没有变？</h3>
+      <p>你连续加了皇冠、披风、灯笼……但你的生物脸从未变过，哪怕你从没重新描述过它本身。是什么东西替你"记住"了原始形象？能不能关掉这个机制？</p>
+
+      <div class="wire-diagram">
+        <div style="font-size:13px; color:#555; margin-bottom: 10px;">你加了 4 件装扮，OUTFIT 计数是 4，脸还是原来的脸</div>
+        <span class="wire-box wb-blue">第1次：原始形象</span>
+        <span class="wire-arrow">→</span>
+        <span class="wire-box wb-green">加皇冠</span>
+        <span class="wire-arrow">→</span>
+        <span class="wire-box wb-green">加披风</span>
+        <span class="wire-arrow">→</span>
+        <span class="wire-box wb-green">加灯笼</span>
+        <div class="wire-label" style="margin-top:8px">每次都是"同一张脸 + 新装扮"，不是"上一次的图 + 新装扮"——但为什么？</div>
+      </div>
+
+      <p>→ <strong>答案在第7章</strong>（Callback 机制）</p>
+
+      <div class="callout tip">
+        <div class="callout-title">✅ 移除装扮是按钮，而不是句子</div>
+        每件装扮旁边都有一个 ✕ 按钮。移除这个操作没有歧义，不需要模型来"理解"，直接执行就行——正好和"建议只写词、不按按钮"是镜像的道理。
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="showTab(3)">← 第一个工具</button>
+        <button class="nav-btn primary" onclick="showTab(5)">下一章：第二个工具 →</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ TAB 5: 第二个工具 ═══ -->
+    <div class="tab-pane" id="tab-5">
+      <h2 class="page-title">Chapter 4 · 第二个工具——两个工具如何"对话"</h2>
+      <p class="subtitle">工具之间不互相调用，靠一个共享字典传数据——理解这个，能省你几周调试时间</p>
+
+      <div class="intro-box">
+        <strong>这章学什么：</strong>加第二个工具，然后弄清楚两个工具是怎么互相"认识"对方的工作成果的。关键答案是 <code>tool_context.state</code>——一个共享字典。<br>
+        <strong>要做的事：</strong>往 tools 列表加一个名字，重启 Dev UI，观察 State 标签页。
+      </div>
+
+      <h3>唯一的代码改动（Lab 的最后一次编辑）</h3>
+      <p>打开 <code>grove/agent.py</code>，在 tools 列表里加一个名字：</p>
+      <pre><span class="var">tools</span>=[<span class="fn">cast_candidates</span>, <span class="fn">lock_candidate</span>],</pre>
+      <p>加工具就是"往列表里加个名字"——这是整个 Lab 的最后一次代码改动。</p>
+
+      <h3>一句话触发两个工具</h3>
+      <p>重启 Dev UI，新建会话，发送：</p>
+      <pre>summon something cozy that likes rain, and call it Mochi</pre>
+      <p>你会看到<strong>两个</strong>调用气泡依次出现：先 <code>cast_candidates</code>，再 <code>lock_candidate</code>。</p>
+
+      <h3>核心问题：lock_candidate 怎么知道要锁定哪张图？</h3>
+      <p>打开 <code>lock_candidate</code> 的调用记录，模型实际传入的参数是：</p>
+      <pre><span class="fn">lock_candidate</span>(<span class="var">index</span>=<span class="num">0</span>, <span class="var">name</span>=<span class="str">"Mochi"</span>)</pre>
+      <p>看它的函数签名（在 <code>forge/agent/tools.py</code>）：</p>
+      <pre><span class="kw">async def</span> <span class="fn">lock_candidate</span>(<span class="var">index</span>: <span class="fn">int</span>, <span class="var">name</span>: <span class="fn">str</span>, <span class="var">tool_context</span>: <span class="fn">ToolContext</span>) -> <span class="fn">dict</span>:
+    <span class="str">"""Lock one candidate as the canonical character."""</span>
+    <span class="var">candidates</span> = <span class="var">tool_context</span>.<span class="fn">state</span>.<span class="fn">get</span>(<span class="str">"temp:candidates"</span>, [])
+    <span class="var">ref</span> = <span class="var">candidates</span>[<span class="var">index</span>]
+    <span class="var">tool_context</span>.<span class="fn">state</span>[<span class="str">"character_ref"</span>] = <span class="var">ref</span></pre>
+      <p>参数里<strong>没有文件名，没有图片，没有列表</strong>。模型能给它的只有一个数字和一个名字。那文件名从哪来的？</p>
+
+      <div class="callout danger">
+        <div class="callout-title">🔑 答案：tool_context.state——共享字典</div>
+        两个工具函数<strong>从来不互相调用</strong>。是 <code>tool_context.state</code> 这个字典在中间做"手递手"。
+        <br><br>
+        <code>cast_candidates</code> 把候选文件名列表写进 <code>state["temp:candidates"]</code>；<code>lock_candidate</code> 运行时，从这个字典里按 <code>index=0</code> 取出对应文件名。
+        <br><br>
+        <strong>没有消息传递，没有返回值通道——就是一个共享的"房间"，一个写进去，下一个读出来。</strong>
+      </div>
+
+      <h3>cast_candidates 写了什么进 state？</h3>
+      <p>查看 <code>forge/agent/tools.py</code> 中 <code>cast_candidates</code> 的最后几行：</p>
+      <pre><span class="var">tool_context</span>.<span class="fn">state</span>[<span class="str">"temp:candidates"</span>] = <span class="var">filenames</span>       <span class="cm"># 候选图文件名列表</span>
+<span class="var">tool_context</span>.<span class="fn">state</span>[<span class="str">"character_sheet"</span>] = {<span class="str">"name"</span>: <span class="str">""</span>, <span class="str">"description"</span>: <span class="var">description</span>}
+<span class="var">tool_context</span>.<span class="fn">state</span>[<span class="str">"provisional_ref"</span>] = <span class="var">filenames</span>[<span class="num">0</span>]   <span class="cm"># 临时参考图（还没命名）</span>
+<span class="var">tool_context</span>.<span class="fn">state</span>[<span class="str">"temp:provisional_ref_png"</span>] = <span class="var">pngs</span>[<span class="num">0</span>][<span class="num">0</span>]  <span class="cm"># 图片字节（临时）</span></pre>
+
+      <h3>State 标签页里的完整记录</h3>
+      <p>两个工具都跑完后，点 State 标签页：</p>
+      <pre>character_sheet   {"name": "Mochi", "description": "A cozy red panda...", "style_notes": ""}
+provisional_ref   ""
+character_ref     "candidate_0.png"
+look_history      []</pre>
+      <table>
+        <tr><th>字段</th><th>谁写的</th><th>含义</th></tr>
+        <tr><td><code>character_sheet</code></td><td>cast_candidates（名字为空）→ lock_candidate（填入 Mochi）</td><td>角色档案</td></tr>
+        <tr><td><code>provisional_ref</code></td><td>cast_candidates 写入 → lock_candidate 清空为 ""</td><td>临时参考图，锁定后被清空</td></tr>
+        <tr><td><code>character_ref</code></td><td>lock_candidate</td><td>正式的、被认领的参考图</td></tr>
+      </table>
+      <p>那个空字符串（<code>provisional_ref = ""</code>）是这章的精华：<code>cast_candidates</code> 之后只有"参考"，<code>lock_candidate</code> 之后才有"角色"。清空就是跨越的"收据"。</p>
+
+      <h3>Agent 也读这个字典</h3>
+      <p>打开 <code>forge/agent/character_forge.py</code>，看它的 instruction 模板：</p>
+      <pre>Character card: {character_sheet?}</pre>
+      <p><strong>ADK 在每次调用模型之前，会自动把 state 里对应的值填进去。</strong>工具写了 <code>character_sheet</code>，prompt 把它读回来给模型——一次完整的闭环，而且工具文件、Agent 文件、state 三者之间没有任何 import 关系。</p>
+
+      <h3>两条必须记住的规则</h3>
+      <div class="concept-card">
+        <div class="label">规则 1：大东西不进 state</div>
+        <p>1.3MB 的图片去 artifacts（附件系统），只有文件名字符串进 state。因为每次给模型的 prompt 是纯文字，任何要让模型看到的东西都必须能塞进一段文字里。</p>
+      </div>
+      <div class="concept-card">
+        <div class="label">规则 2：前缀决定寿命</div>
+        <table style="margin:8px 0 0">
+          <tr><th>前缀</th><th>存活时间</th></tr>
+          <tr><td><code>temp:</code></td><td>只活一个回合（turn），下一条消息就消失</td></tr>
+          <tr><td>无前缀</td><td>整个对话 session</td></tr>
+          <tr><td><code>user:</code></td><td>跨 session 永久保存</td></tr>
+        </table>
+      </div>
+      <div class="callout warn">
+        <div class="callout-title">⚠️ 动手验证 temp: 规则</div>
+        新建会话，把请求拆成两轮：第1轮 <code>summon something cozy</code>，第2轮 <code>claim the first one and call it Mochi</code>。第2轮会报错 <code>index 0 out of range</code>——因为 <code>temp:candidates</code> 已经因为 turn 结束而消失了。这就是为什么 State 标签里看不到 <code>temp:</code> 前缀的键，它们从不被持久化。
+      </div>
+
+      <h3>这章的核心结论</h3>
+      <div class="concept-card">
+        <div class="label">核心认知</div>
+        <p style="font-size:15px; font-weight:600;">一个工具真正的输出，不是它嘴上说的那句总结性的话，而是它写进 state 里的东西。</p>
+        <p style="margin-top:8px">模型没有在两个工具之间传数据——一个字典做到了。</p>
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="showTab(4)">← 体验 The Valley</button>
+        <button class="nav-btn primary" onclick="showTab(6)">下一章：Callback 机制 →</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ TAB 6: Callback ═══ -->
+    <div class="tab-pane" id="tab-6">
+      <h2 class="page-title">Chapter 5 · Callback——伸手进那根线里</h2>
+      <p class="subtitle">解答"为什么脸没变"；理解指令、点击、Callback 三种控制力度的本质区别</p>
+
+      <div class="intro-box">
+        <strong>这章学什么：</strong>什么是 Callback，在哪个时刻触发，用来做什么。重点是理解 <code>before_tool</code> 如何在模型开口之前悄悄把原始图片塞进去，以及"打开/关闭 identity lock"对图片漂移的影响。<br>
+        <strong>要做的事：</strong>读代码（不需要改），对比 grove 和 grove_locked 的行为，在 valley 里开关 identity lock。
+      </div>
+
+      <h3>什么是 Callback？</h3>
+      <p>Callback 是<strong>你自己的普通函数</strong>，在 ADK 框架里被挂载到五个固定的时刻，ADK 保证每次到了那个时刻就会自动调用它——不管模型愿不愿意，每次必然执行。</p>
+      <p>打开 <code>forge/agent/callbacks.py</code>，看到5个函数：</p>
+      <table>
+        <tr><th>函数名</th><th>触发时刻</th></tr>
+        <tr><td><code>before_model</code></td><td>发送给模型之前</td></tr>
+        <tr><td><code>after_model</code></td><td>模型返回之后</td></tr>
+        <tr><td><code>before_tool</code></td><td><strong>模型决定调用工具之后、函数真正执行之前</strong>（能改变工具收到什么）</td></tr>
+        <tr><td><code>after_tool</code></td><td>工具函数执行完毕之后</td></tr>
+        <tr><td><code>on_end</code></td><td>整个回合结束时</td></tr>
+      </table>
+      <div class="callout info">
+        <div class="callout-title">💡 谁在调用 Callback？</div>
+        在 <code>forge/agent/character_forge.py</code> 里，这5个函数被作为参数传给 ADK（<code>before_tool_callback=before_tool</code>），由 ADK 自动触发。而在 valley 前端（<code>forge/agent/service.py</code>）里，是普通软件代码在同样的时刻手动调用这些函数。<br><br>
+        同一段代码，同一个触发时机，不同的调用者——说明 Callback 没有魔法，就是函数。ADK 唯一多做的事是"保证绝不会忘记调用它"。
+      </div>
+
+      <h3>before_tool：决定脸是否改变的那一刻</h3>
+      <pre><span class="var">png</span> = (<span class="var">state</span>.<span class="fn">get</span>(<span class="str">"temp:_last_output_png"</span>) <span class="kw">if</span> <span class="var">mode</span> == <span class="str">"latest"</span>
+       <span class="kw">else</span> <span class="var">state</span>.<span class="fn">get</span>(<span class="str">"temp:character_ref_png"</span>)
+            <span class="kw">or</span> <span class="var">state</span>.<span class="fn">get</span>(<span class="str">"temp:provisional_ref_png"</span>))
+<span class="kw">if</span> <span class="var">png</span> <span class="kw">is None</span>:
+    <span class="var">png</span> = <span class="kw">await</span> <span class="fn">artifact_png</span>(<span class="var">tool_context</span>, <span class="var">seed</span>)
+<span class="var">state</span>[<span class="str">"temp:active_reference_png"</span>] = <span class="var">png</span></pre>
+      <p>它在操作 <code>state</code>——第6章那个共享字典。那个 <code>or</code> 决定优先级：先用正式锁定的 <code>character_ref</code>，退而求其次用临时的 <code>provisional_ref</code>，保证每次画图前一定有一张参考图。</p>
+
+      <h3>Identity Lock：关键一行</h3>
+      <pre><span class="var">picked</span> = <span class="var">state</span>.<span class="fn">get</span>(<span class="str">"requested_reference"</span>) <span class="kw">or</span> <span class="var">canon</span>
+<span class="kw">if</span> <span class="var">state</span>.<span class="fn">get</span>(<span class="str">"identity_lock"</span>, <span class="kw">True</span>):
+    <span class="kw">return</span> <span class="var">canon</span>, <span class="var">canon_png</span>, <span class="str">f"identity lock → overruled {picked}, anchored to {canon}"</span>
+<span class="kw">return</span> <span class="var">picked</span>, <span class="var">picked_png</span>, <span class="str">f"lock off → honoured {picked}"</span></pre>
+      <p><code>picked</code> 就是你在 valley 界面上点击选中的图。但第二行可以直接把它扔掉——只要 <code>identity_lock</code> 是开的，无论你点了什么，都强行换回 <code>canon</code>（你最初认领的那张图）。</p>
+
+      <h3>两种模式，本质区别</h3>
+      <p>每次给图像模型的输入只有两样：<strong>一张图 + 一句话</strong>。</p>
+      <table>
+        <tr><th>模式</th><th>发送的图</th><th>发送的句子</th><th>结果</th></tr>
+        <tr><td>⚓ <strong>锁定开</strong></td><td>每轮都是最初那张 P₀</td><td>全部装扮历史（"皇冠 + 披风 + 灯笼"）</td><td>脸永远不变</td></tr>
+        <tr><td>◈ <strong>锁定关</strong></td><td>上一轮的输出：P₀→P₁→P₂→P₃</td><td>只有最新的那一件装扮</td><td>脸慢慢漂移</td></tr>
+      </table>
+      <div class="callout warn">
+        <div class="callout-title">⚠️ 为什么漂移很难发现？</div>
+        第2轮时，模型不是在看你的原始生物，而是在看它上一轮"猜"出来的版本。任何微小的画错都会成为下一轮的"事实依据"，误差一点点累积——每次看起来都没什么问题，但 4-5 轮后对比最初，眼睛变圆了、嘴巴形状变了。这是"复印件的复印件"效应。
+      </div>
+
+      <h3>对比实验：grove vs grove_locked</h3>
+      <ol class="step-list">
+        <li>在 grove 里认领 Mochi，然后说"给它戴顶金冠"——你得到一只全新的、戴着金冠的生物，Mochi 消失了。因为 grove 没有 <code>generate_look</code>，唯一会画图的 <code>cast_candidates</code> 每次都是重新召唤一只新的。</li>
+        <li>切换到 grove_locked，同样的操作——同一张脸，换上了金冠。打开 State 标签页：<pre>current_look   {"form": "a golden crown", "anchored_to": "canon", ...}</pre>
+        <code>anchored_to: "canon"</code> 就是 <code>before_tool</code> 留下的收据。</li>
+      </ol>
+
+      <h3>三层控制力度——这章的精华总结</h3>
+      <table>
+        <tr><th>控制方式</th><th>谁来保证</th><th>可靠性</th></tr>
+        <tr><td>指令（"永远是可爱的动物"）</td><td>模型，看心情</td><td>低——模型可能不执行</td></tr>
+        <tr><td>你的点击/选择</td><td>没有人——这只是一个请求</td><td>低——可以被覆盖</td></tr>
+        <tr><td>Callback（identity lock）</td><td>你的代码，每轮必然执行</td><td>高——没有例外</td></tr>
+      </table>
+
+      <div class="concept-card">
+        <div class="label">核心结论</div>
+        <p style="font-size:15px; font-weight:600;">指令是请求。Callback 是规则。</p>
+        <p style="margin-top:8px">任何你输不起的东西，既不该只写在 prompt 里，也不该只靠一次点击来保证——它必须写进 Callback 里。</p>
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="showTab(5)">← 第二个工具</button>
+        <button class="nav-btn primary" onclick="showTab(7)">下一章：总结 →</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ TAB 7: 总结 ═══ -->
+    <div class="tab-pane" id="tab-7">
+      <h2 class="page-title">总结（Close）</h2>
+      <p class="subtitle">你学到了什么 · 持久化的两种数据 · 下一步去哪</p>
+
+      <div class="intro-box">
+        <strong>最后一章：</strong>做一个小实验，看清"写进 state"和"只在界面上显示"的数据有什么本质区别，然后用一张表总结整个 Lab 教的东西。
+      </div>
+
+      <h3>最后一个实验：刷新页面</h3>
+      <p>在 valley 里对你的生物做了几个改变之后，按 <strong>Cmd/Ctrl + Shift + R</strong> 强制刷新页面。</p>
+      <ul class="bullets">
+        <li>你的生物还在，名字还在，装扮还在——因为这些被写进了 session state（持久层）</li>
+        <li>右侧的追踪日志（Inspector tape）消失了——因为那只是内存里的展示数据，没有被持久化</li>
+      </ul>
+      <div class="callout tip">
+        <div class="callout-title">✅ 核心经验</div>
+        同一个"看起来都在界面上"的数据，有的被写进了持久层，有的没有。<strong>分清楚你的数据属于哪一类，是做 Agent 工程最重要的能力之一。</strong>
+      </div>
+
+      <h3>整个 Lab 的内容汇总</h3>
+      <table>
+        <tr><th>部件</th><th>新出现的"线"</th><th>关键认知</th></tr>
+        <tr><td>模型 + 指令</td><td>没有线，只能说话</td><td>没有工具的 Agent 是一段高质量的对话</td></tr>
+        <tr><td>一个工具</td><td>模型 → 工具（由 Runtime 执行）</td><td>模型决定调用什么、写参数；Runtime 真正执行</td></tr>
+        <tr><td>第二个工具</td><td>工具 → Agent（通过 state 字典）</td><td>工具的真正输出是它写进 state 的东西</td></tr>
+        <tr><td>Callback</td><td>你的代码 → 伸进那根线</td><td>Callback 是规则，不是请求</td></tr>
+      </table>
+
+      <h3>通用的 Agent 循环</h3>
+      <div class="wire-diagram">
+        <span class="wire-box wb-blue">Listen<br><small>接收输入</small></span>
+        <span class="wire-arrow">→</span>
+        <span class="wire-box wb-green">Decide<br><small>调用什么工具</small></span>
+        <span class="wire-arrow">→</span>
+        <span class="wire-box wb-orange">Act<br><small>工具执行</small></span>
+        <span class="wire-arrow">→</span>
+        <span class="wire-box wb-red">State 改变<br><small>写入字典</small></span>
+        <span class="wire-arrow">→</span>
+        <span class="wire-box wb-blue">Listen<br><small>下一轮</small></span>
+        <div class="wire-label" style="margin-top:12px">Claude Code 用这个循环编辑文件 · Deep Research 用这个循环浏览网页 · Gemini CLI 用这个循环跑 shell<br>门后面的工具不同，这个循环是一样的</div>
+      </div>
+
+      <h3>三个控制层级回顾</h3>
+      <table>
+        <tr><th>控制方式</th><th>保证力度</th><th>适用场景</th></tr>
+        <tr><td>指令（Instruction）</td><td>低——模型看心情执行</td><td>风格、口吻、软性约束</td></tr>
+        <tr><td>用户点击/选择</td><td>低——只是请求，可被覆盖</td><td>可选偏好</td></tr>
+        <tr><td>Callback</td><td>高——每次必然执行</td><td>业务规则、安全边界、不能丢的数据</td></tr>
+      </table>
+
+      <h3>下一步</h3>
+      <div class="concept-card">
+        <div class="label">Week 2：多个 Agent 协作</div>
+        <p>这个 Lab 展示的是<em>一个</em> Agent。下一周的问题是：一个 Agent 撑不住一整个复杂任务——答案是多个 Agent 协作，而不是把 prompt 写得更长。全5周课程：<strong>goo.gle/agent101</strong></p>
+      </div>
+      <div class="concept-card">
+        <div class="label">对比 grove 和 grove_locked</div>
+        <p><code>forge/agent/character_forge.py</code> 相比 <code>grove/agent.py</code>，只多了第三个工具 <code>generate_look</code> 和5个 Callback。所有新增内容都是"控制"，不是"功能"。</p>
+      </div>
+      <div class="concept-card">
+        <div class="label">第三个工具</div>
+        <p><code>generate_look(form)</code> 是你在 grove 里没有挂载的那个——它能保住同一张脸，是因为 <code>before_tool</code> Callback 每次都把原始图片字节悄悄塞进它的输入里。这就是为什么它和 Callback 住在同一个文件夹里。</p>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">✅ 整个 Lab 最后一句话</div>
+        模型只能说话，程序只能照脚本走，Agent 是两者的结合——而<strong>工具改变的东西，就是 state</strong>。
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="showTab(6)">← Callback 机制</button>
+        <button class="nav-btn" onclick="showTab(0)">↑ 回到开始</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function showTab(index) {
+    document.querySelectorAll('.tab-pane').forEach(function(p, i) {
+      p.classList.toggle('active', i === index);
+    });
+    document.querySelectorAll('.tab-btn').forEach(function(b, i) {
+      b.classList.toggle('active', i === index);
+    });
+    document.querySelector('.content').scrollTop = 0;
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>

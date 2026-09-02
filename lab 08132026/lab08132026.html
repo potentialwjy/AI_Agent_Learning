@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accelerate AI with Cloud Run — Google Cloud Labs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Google Sans', system-ui, sans-serif; }
+    code, pre, .mono { font-family: 'Roboto Mono', monospace; }
+
+    /* Sidebar active state */
+    .nav-item { cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
+    .nav-item:hover { border-left-color: #e8eaed; background: #f8f9fa; }
+    .nav-item.active { border-left-color: #1a73e8; background: #e8f0fe; color: #1a73e8; font-weight: 500; }
+
+    /* Code blocks */
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      font-size: 0.83rem;
+      line-height: 1.7;
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: #313244; color: #cdd6f4; border: none;
+      border-radius: 4px; padding: 4px 10px; font-size: 0.72rem;
+      cursor: pointer; font-family: 'Google Sans', sans-serif;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: #45475a; }
+    .copy-btn.copied { background: #a6e3a1; color: #1e1e2e; }
+
+    /* Token colors */
+    .t-blue { color: #89b4fa; }
+    .t-green { color: #a6e3a1; }
+    .t-yellow { color: #f9e2af; }
+    .t-red { color: #f38ba8; }
+    .t-gray { color: #6c7086; }
+    .t-cyan { color: #89dceb; }
+    .t-mauve { color: #cba6f7; }
+
+    /* Step labels */
+    .step-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #1a73e8; color: white;
+      font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
+    }
+
+    /* Callout boxes */
+    .callout { border-radius: 8px; padding: 14px 18px; font-size: 0.88rem; line-height: 1.6; }
+    .callout-blue { background: #e8f0fe; border-left: 4px solid #1a73e8; }
+    .callout-green { background: #e6f4ea; border-left: 4px solid #34a853; }
+    .callout-yellow { background: #fef7e0; border-left: 4px solid #fbbc04; }
+    .callout-red { background: #fce8e6; border-left: 4px solid #ea4335; }
+
+    /* Sections hidden/shown */
+    .lab-section { display: none; }
+    .lab-section.active { display: block; }
+
+    /* Scroll */
+    html { scroll-behavior: smooth; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+<!-- ── TOP BAR ─────────────────────────────────────────────────── -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+  <div class="max-w-screen-xl mx-auto px-6 h-14 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <!-- Google Cloud logo (SVG inline) -->
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 6.75a5.25 5.25 0 0 1 5.25 5.25H19.5A7.5 7.5 0 0 0 12 4.5v2.25z" fill="#4285F4"/>
+        <path d="M18.75 12a6.75 6.75 0 1 1-13.5 0 6.75 6.75 0 0 1 13.5 0z" fill="#34A853"/>
+        <path d="M12 17.25A5.25 5.25 0 0 1 6.75 12H4.5A7.5 7.5 0 0 0 12 19.5v-2.25z" fill="#FBBC04"/>
+        <path d="M6.75 12a5.24 5.24 0 0 1 2.04-4.12L7.24 6.1A7.5 7.5 0 0 0 4.5 12h2.25z" fill="#EA4335"/>
+      </svg>
+      <span class="text-sm font-medium text-gray-600">Google Cloud Labs</span>
+      <span class="text-gray-300 text-sm">|</span>
+      <span class="text-sm font-semibold text-gray-900">Accelerate AI with Cloud Run</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">Aug 13, 2026 · Sunnyvale</span>
+      <div id="overall-progress" class="text-xs text-blue-600 font-medium">0 / 7 labs</div>
+    </div>
+  </div>
+</header>
+
+<!-- ── LAYOUT ─────────────────────────────────────────────────── -->
+<div class="max-w-screen-xl mx-auto flex min-h-screen">
+
+  <!-- SIDEBAR -->
+  <aside class="w-64 shrink-0 bg-white border-r border-gray-200 sticky top-14 h-[calc(100vh-56px)] overflow-y-auto">
+    <nav class="py-4">
+      <div class="px-4 pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Lab Guide</div>
+
+      <div class="nav-item active px-4 py-2.5 text-sm" onclick="showSection('overview')">
+        <span class="text-gray-400 mr-2">◆</span> Overview
+      </div>
+
+      <div class="px-4 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">Morning Session</div>
+
+      <div class="nav-item px-4 py-2.5 text-sm" onclick="showSection('lab0')">
+        <span class="step-badge mr-2 text-xs" style="width:20px;height:20px;font-size:0.65rem">0</span> Setup
+        <span class="text-xs text-gray-400 block ml-7">15 min</span>
+      </div>
+      <div class="nav-item px-4 py-2.5 text-sm" onclick="showSection('lab1')">
+        <span class="step-badge mr-2 text-xs" style="width:20px;height:20px;font-size:0.65rem">1</span> The Agent
+        <span class="text-xs text-gray-400 block ml-7">20 min</span>
+      </div>
+      <div class="nav-item px-4 py-2.5 text-sm" onclick="showSection('lab2')">
+        <span class="step-badge mr-2 text-xs" style="width:20px;height:20px;font-size:0.65rem">2</span> Containerize
+        <span class="text-xs text-gray-400 block ml-7">45 min</span>
+      </div>
+      <div class="nav-item px-4 py-2.5 text-sm" onclick="showSection('lab3')">
+        <span class="step-badge mr-2 text-xs" style="width:20px;height:20px;font-size:0.65rem">3</span> Deploy to Cloud Run
+        <span class="text-xs text-gray-400 block ml-7">30 min</span>
+      </div>
+
+      <div class="px-4 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">Afternoon Session</div>
+
+      <div class="nav-item px-4 py-2.5 text-sm" onclick="showSection('lab4')">
+        <span class="step-badge mr-2 text-xs" style="width:20px;height:20px;font-size:0.65rem">4</span> Secrets & Config
+        <span class="text-xs text-gray-400 block ml-7">30 min</span>
+      </div>
+      <div class="nav-item px-4 py-2.5 text-sm" onclick="showSection('lab5')">
+        <span class="step-badge mr-2 text-xs" style="width:20px;height:20px;font-size:0.65rem">5</span> Production Hardening
+        <span class="text-xs text-gray-400 block ml-7">45 min</span>
+      </div>
+      <div class="nav-item px-4 py-2.5 text-sm" onclick="showSection('lab6')">
+        <span class="step-badge mr-2 text-xs" style="width:20px;height:20px;font-size:0.65rem">6</span> Observability
+        <span class="text-xs text-gray-400 block ml-7">45 min</span>
+      </div>
+      <div class="nav-item px-4 py-2.5 text-sm" onclick="showSection('lab7')">
+        <span class="step-badge mr-2 text-xs" style="width:20px;height:20px;font-size:0.65rem">7</span> Scaling & Traffic
+        <span class="text-xs text-gray-400 block ml-7">30 min</span>
+      </div>
+
+      <div class="border-t border-gray-100 mt-3 pt-3">
+        <div class="nav-item px-4 py-2.5 text-sm text-gray-500" onclick="showSection('cleanup')">
+          <span class="mr-2">🗑</span> Cleanup
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 px-10 py-10 max-w-3xl">
+
+    <!-- ══ OVERVIEW ══════════════════════════════════════════════ -->
+    <section id="overview" class="lab-section active">
+      <div class="mb-2 text-xs font-semibold text-blue-600 uppercase tracking-wider">Google Cloud Labs · Aug 13, 2026</div>
+      <h1 class="text-3xl font-bold text-gray-900 mb-3">Accelerate AI with Cloud Run</h1>
+      <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+        You've built AI agents that work on your machine. This full-day lab closes the gap to production —
+        from a local Python process to a hardened, observable, auto-scaling service on Cloud Run.
+      </p>
+
+      <!-- What you'll build -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+        <h2 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <span class="text-blue-500">🏗</span> What you'll build
+        </h2>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-blue-50 rounded-lg p-4">
+            <div class="text-2xl mb-1">🤖</div>
+            <div class="font-medium text-sm text-gray-900">AR Email Agent</div>
+            <div class="text-xs text-gray-500 mt-1">An A2A-protocol AI agent that drafts collection emails — your example workload for the day</div>
+          </div>
+          <div class="bg-green-50 rounded-lg p-4">
+            <div class="text-2xl mb-1">📦</div>
+            <div class="font-medium text-sm text-gray-900">Production Container</div>
+            <div class="text-xs text-gray-500 mt-1">A lean, multi-stage Docker image built with Cloud Build and stored in Artifact Registry</div>
+          </div>
+          <div class="bg-purple-50 rounded-lg p-4">
+            <div class="text-2xl mb-1">🚀</div>
+            <div class="font-medium text-sm text-gray-900">Cloud Run Service</div>
+            <div class="text-xs text-gray-500 mt-1">Auto-scaling, health-checked, secrets-managed deployment on fully managed serverless</div>
+          </div>
+          <div class="bg-yellow-50 rounded-lg p-4">
+            <div class="text-2xl mb-1">📊</div>
+            <div class="font-medium text-sm text-gray-900">Observability Stack</div>
+            <div class="text-xs text-gray-500 mt-1">Structured logs in Cloud Logging, distributed traces in Cloud Trace, metrics in Cloud Monitoring</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- What you'll learn -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <span class="text-green-500">✓</span> What you'll learn
+        </h2>
+        <ul class="space-y-2 text-sm text-gray-700">
+          <li class="flex gap-2"><span class="text-green-500 mt-0.5">✓</span> Write a production-grade Dockerfile for a Python AI agent</li>
+          <li class="flex gap-2"><span class="text-green-500 mt-0.5">✓</span> Deploy to Cloud Run with <code class="bg-gray-100 px-1 rounded text-xs">gcloud run deploy --source .</code></li>
+          <li class="flex gap-2"><span class="text-green-500 mt-0.5">✓</span> Store secrets in Secret Manager and bind them at deploy time</li>
+          <li class="flex gap-2"><span class="text-green-500 mt-0.5">✓</span> Configure startup probes, liveness probes, and concurrency limits</li>
+          <li class="flex gap-2"><span class="text-green-500 mt-0.5">✓</span> Emit structured JSON logs and OpenTelemetry traces to Google Cloud</li>
+          <li class="flex gap-2"><span class="text-green-500 mt-0.5">✓</span> Split traffic between revisions for safe rollouts</li>
+        </ul>
+      </div>
+
+      <!-- Architecture diagram -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+        <h2 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <span class="text-purple-500">⬡</span> Architecture
+        </h2>
+        <div class="flex items-center justify-center gap-2 text-sm py-2 overflow-x-auto">
+          <div class="bg-gray-100 rounded-lg px-4 py-3 text-center min-w-[90px]">
+            <div class="text-2xl mb-1">💬</div>
+            <div class="font-medium text-xs">Client</div>
+            <div class="text-gray-400 text-xs">A2A / HTTP</div>
+          </div>
+          <div class="text-gray-400 font-mono">→</div>
+          <div class="bg-blue-100 rounded-lg px-4 py-3 text-center min-w-[110px]">
+            <div class="text-2xl mb-1">☁</div>
+            <div class="font-medium text-xs text-blue-700">Cloud Run</div>
+            <div class="text-gray-400 text-xs">ar-email-agent</div>
+          </div>
+          <div class="text-gray-400 font-mono">→</div>
+          <div class="bg-purple-100 rounded-lg px-4 py-3 text-center min-w-[100px]">
+            <div class="text-2xl mb-1">🔐</div>
+            <div class="font-medium text-xs text-purple-700">Secret Mgr</div>
+            <div class="text-gray-400 text-xs">credentials</div>
+          </div>
+          <div class="text-gray-400 font-mono">→</div>
+          <div class="bg-green-100 rounded-lg px-4 py-3 text-center min-w-[100px]">
+            <div class="text-2xl mb-1">🔧</div>
+            <div class="font-medium text-xs text-green-700">MCP Tools</div>
+            <div class="text-gray-400 text-xs">SAP / APIs</div>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400">
+          <span class="bg-yellow-100 text-yellow-700 rounded px-2 py-1">Cloud Logging</span>
+          <span class="bg-yellow-100 text-yellow-700 rounded px-2 py-1">Cloud Trace</span>
+          <span class="bg-yellow-100 text-yellow-700 rounded px-2 py-1">Cloud Monitoring</span>
+        </div>
+      </div>
+
+      <!-- Prerequisites -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-3">Prerequisites</h2>
+        <div class="space-y-2 text-sm">
+          <div class="flex items-start gap-3 bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <span class="text-gray-400">□</span>
+            <div><span class="font-medium">Google Cloud project</span> with billing enabled</div>
+          </div>
+          <div class="flex items-start gap-3 bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <span class="text-gray-400">□</span>
+            <div><span class="font-medium">gcloud CLI</span> installed and authenticated (<code class="bg-gray-100 px-1 rounded text-xs">gcloud auth login</code>)</div>
+          </div>
+          <div class="flex items-start gap-3 bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <span class="text-gray-400">□</span>
+            <div><span class="font-medium">Docker Desktop</span> running locally</div>
+          </div>
+          <div class="flex items-start gap-3 bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <span class="text-gray-400">□</span>
+            <div><span class="font-medium">Python 3.12+</span> for local testing</div>
+          </div>
+          <div class="flex items-start gap-3 bg-white border border-gray-200 rounded-lg px-4 py-3">
+            <span class="text-gray-400">□</span>
+            <div><span class="font-medium">Familiarity with AI agents</span> — you've built one with Antigravity, AI Studio, or similar</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-blue">
+        <strong>Duration:</strong> Full day (~6 hours of labs + breaks). Labs 0–3 are the morning session; Labs 4–7 are afternoon.
+      </div>
+
+      <div class="mt-8 flex justify-end">
+        <button onclick="showSection('lab0')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+          Start Lab → Lab 0: Setup
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ LAB 0: SETUP ══════════════════════════════════════════ -->
+    <section id="lab0" class="lab-section">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="step-badge">0</div>
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">15 minutes</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Set Up Your Environment</h1>
+      <p class="text-gray-500 text-sm mb-8">Configure your Google Cloud project and get the lab source code.</p>
+
+      <!-- Step 1 -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">1</div>
+          <h2 class="font-semibold text-gray-900">Set your project and region</h2>
+        </div>
+        <p class="text-sm text-gray-600 mb-3 ml-9">Replace <code class="bg-gray-100 px-1 rounded">YOUR_PROJECT_ID</code> with your assigned project.</p>
+        <div class="relative ml-9">
+          <pre><span class="t-green">export</span> <span class="t-cyan">PROJECT_ID</span>=<span class="t-yellow">YOUR_PROJECT_ID</span>
+<span class="t-green">export</span> <span class="t-cyan">REGION</span>=<span class="t-yellow">us-central1</span>
+
+gcloud config set project <span class="t-cyan">$PROJECT_ID</span>
+gcloud config set run/region <span class="t-cyan">$REGION</span></pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">2</div>
+          <h2 class="font-semibold text-gray-900">Enable required APIs</h2>
+        </div>
+        <p class="text-sm text-gray-600 mb-3 ml-9">This takes ~60 seconds. All services are available on free-tier quotas for today's labs.</p>
+        <div class="relative ml-9">
+          <pre>gcloud services enable \
+  run.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
+  secretmanager.googleapis.com \
+  cloudtrace.googleapis.com \
+  logging.googleapis.com \
+  monitoring.googleapis.com</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">3</div>
+          <h2 class="font-semibold text-gray-900">Clone the lab repository</h2>
+        </div>
+        <div class="relative ml-9">
+          <pre>git clone https://github.com/google-cloud-labs/accelerate-ai-cloudrun
+cd accelerate-ai-cloudrun/ar-email-agent</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">4</div>
+          <h2 class="font-semibold text-gray-900">Run the agent locally</h2>
+        </div>
+        <p class="text-sm text-gray-600 mb-3 ml-9">Verify it starts before we containerize it.</p>
+        <div class="relative ml-9">
+          <pre>pip install -r requirements.txt
+
+<span class="t-green">export</span> <span class="t-cyan">IBD_TESTING</span>=<span class="t-yellow">1</span>   <span class="t-gray"># use mock data — no live backend needed</span>
+<span class="t-green">export</span> <span class="t-cyan">PORT</span>=<span class="t-yellow">8080</span>
+
+python app/main.py</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="callout callout-green ml-9 mt-3">
+          In a second terminal: <code>curl http://localhost:8080/.well-known/agent.json</code><br/>
+          You should see the agent card JSON. That's your health-check endpoint — Cloud Run will use it later.
+        </div>
+      </div>
+
+      <div class="callout callout-yellow mb-6">
+        <strong>Stuck?</strong> If <code>pip install</code> fails, try <code>pip install -r requirements.txt --break-system-packages</code>.
+      </div>
+
+      <div class="mt-8 flex justify-between">
+        <button onclick="showSection('overview')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">← Overview</button>
+        <button onclick="markDone('lab0'); showSection('lab1')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+          Done → Lab 1: The Agent
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ LAB 1: THE AGENT ══════════════════════════════════════ -->
+    <section id="lab1" class="lab-section">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="step-badge">1</div>
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">20 minutes</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Understand the Agent</h1>
+      <p class="text-gray-500 text-sm mb-8">Know what you're deploying before you containerize it.</p>
+
+      <div class="callout callout-blue mb-6">
+        This agent uses the <strong>A2A (Agent-to-Agent) protocol</strong> — Google's open standard for agent interoperability.
+        It exposes a standard HTTP interface at <code>/.well-known/agent.json</code> that any A2A-compatible client can discover.
+      </div>
+
+      <!-- Key files -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-3">Key files</h2>
+        <div class="space-y-3">
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-start gap-3">
+              <code class="text-xs bg-gray-100 px-2 py-1 rounded text-blue-700">app/main.py</code>
+              <div class="text-sm text-gray-600">A2A server entry point — reads <code class="bg-gray-100 px-1 rounded text-xs">PORT</code> from env, registers health-check endpoint, starts uvicorn</div>
+            </div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-start gap-3">
+              <code class="text-xs bg-gray-100 px-2 py-1 rounded text-blue-700">app/agent.py</code>
+              <div class="text-sm text-gray-600">LangGraph agent loop — Claude 4.5 Sonnet model, system prompt, multi-turn conversation with tools</div>
+            </div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-start gap-3">
+              <code class="text-xs bg-gray-100 px-2 py-1 rounded text-blue-700">app/mcp_tools.py</code>
+              <div class="text-sm text-gray-600">MCP tool loader — switches between mock data (<code class="text-xs">IBD_TESTING=1</code>) and real Agent Gateway. <strong>This is your production/dev toggle.</strong></div>
+            </div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-start gap-3">
+              <code class="text-xs bg-gray-100 px-2 py-1 rounded text-blue-700">app/skills/</code>
+              <div class="text-sm text-gray-600">Markdown skill files loaded at runtime — business logic without code changes</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- What makes it Cloud Run ready -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-3">Why this agent is already Cloud Run-friendly</h2>
+        <div class="space-y-2 text-sm">
+          <div class="flex gap-3 items-start bg-green-50 rounded-lg p-3">
+            <span class="text-green-500 mt-0.5">✓</span>
+            <div><strong>Reads PORT from env</strong> — Cloud Run injects <code class="bg-white px-1 rounded text-xs">PORT=8080</code> at runtime. The agent respects it.</div>
+          </div>
+          <div class="flex gap-3 items-start bg-green-50 rounded-lg p-3">
+            <span class="text-green-500 mt-0.5">✓</span>
+            <div><strong>Binds to 0.0.0.0</strong> — required for Cloud Run's load balancer to reach the container.</div>
+          </div>
+          <div class="flex gap-3 items-start bg-green-50 rounded-lg p-3">
+            <span class="text-green-500 mt-0.5">✓</span>
+            <div><strong>Health-check endpoint</strong> — <code class="bg-white px-1 rounded text-xs">/.well-known/agent.json</code> returns 200. Cloud Run startup and liveness probes will use this.</div>
+          </div>
+          <div class="flex gap-3 items-start bg-green-50 rounded-lg p-3">
+            <span class="text-green-500 mt-0.5">✓</span>
+            <div><strong>Stateless</strong> — in-memory task store, no local disk dependencies. Scales to zero safely.</div>
+          </div>
+          <div class="flex gap-3 items-start bg-yellow-50 rounded-lg p-3">
+            <span class="text-yellow-500 mt-0.5">⚠</span>
+            <div><strong>Secrets in env vars</strong> — currently read from environment. We'll move them to Secret Manager in Lab 4.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick exercise -->
+      <div class="bg-blue-50 rounded-xl border border-blue-200 p-5 mb-8">
+        <h3 class="font-semibold text-blue-900 mb-2">🔍 Quick Exercise (5 min)</h3>
+        <p class="text-sm text-blue-800 mb-3">Send a message to the running agent using the A2A protocol:</p>
+        <div class="relative">
+          <pre style="font-size:0.78rem">curl -X POST http://localhost:8080/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tasks/send",
+    "id": 1,
+    "params": {
+      "message": {
+        "role": "user",
+        "parts": [{"type": "text", "text": "Draft a collection email for business partner 0000200002"}]
+      }
+    }
+  }'</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="text-xs text-blue-700 mt-2">Watch the agent call <code>list_dunning_runs</code> and <code>list_dunned_items</code> from the mock data, then return a draft email.</p>
+      </div>
+
+      <div class="mt-8 flex justify-between">
+        <button onclick="showSection('lab0')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">← Lab 0</button>
+        <button onclick="markDone('lab1'); showSection('lab2')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+          Done → Lab 2: Containerize
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ LAB 2: CONTAINERIZE ════════════════════════════════════ -->
+    <section id="lab2" class="lab-section">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="step-badge">2</div>
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">45 minutes</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Containerize the Agent</h1>
+      <p class="text-gray-500 text-sm mb-8">Write a production Dockerfile and test it locally before pushing to the cloud.</p>
+
+      <!-- Step 1: Dockerfile -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">1</div>
+          <h2 class="font-semibold text-gray-900">Write the Dockerfile</h2>
+        </div>
+        <p class="text-sm text-gray-600 mb-3 ml-9">Create <code class="bg-gray-100 px-1 rounded text-xs">Dockerfile</code> in the <code class="bg-gray-100 px-1 rounded text-xs">ar-email-agent/</code> directory:</p>
+        <div class="relative ml-9">
+          <pre><span class="t-gray"># ── Stage 1: build dependencies ──────────────────────────</span>
+<span class="t-blue">FROM</span> python:3.12-slim <span class="t-blue">AS</span> deps
+
+<span class="t-blue">WORKDIR</span> /build
+
+<span class="t-gray"># Install only what's needed to compile wheels</span>
+<span class="t-blue">RUN</span> apt-get update && apt-get install -y --no-install-recommends \
+    build-essential gcc \
+  && rm -rf /var/lib/apt/lists/*
+
+<span class="t-blue">COPY</span> requirements.txt .
+<span class="t-blue">RUN</span> pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+<span class="t-gray"># ── Stage 2: runtime image ──────────────────────────────</span>
+<span class="t-blue">FROM</span> python:3.12-slim <span class="t-blue">AS</span> runtime
+
+<span class="t-blue">WORKDIR</span> /app
+
+<span class="t-gray"># Copy compiled packages from build stage</span>
+<span class="t-blue">COPY</span> --from=deps /install /usr/local
+
+<span class="t-gray"># Copy application source</span>
+<span class="t-blue">COPY</span> app/ .
+
+<span class="t-gray"># Non-root user for security</span>
+<span class="t-blue">RUN</span> useradd -m -u 1000 agent
+<span class="t-blue">USER</span> agent
+
+<span class="t-gray"># Cloud Run injects PORT at runtime — default to 8080</span>
+<span class="t-blue">ENV</span> PORT=8080 \
+    HOST=0.0.0.0 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+<span class="t-blue">EXPOSE</span> 8080
+
+<span class="t-blue">CMD</span> ["python", "main.py"]</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="callout callout-blue ml-9 mt-3">
+          <strong>Why multi-stage?</strong> The final image has no <code>gcc</code> or build tools — only the runtime. Typical result: 900 MB → 180 MB. Smaller images = faster cold starts.
+        </div>
+      </div>
+
+      <!-- Step 2: .dockerignore -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">2</div>
+          <h2 class="font-semibold text-gray-900">Add .dockerignore</h2>
+        </div>
+        <p class="text-sm text-gray-600 mb-3 ml-9">Keep secrets and local state out of the image:</p>
+        <div class="relative ml-9">
+          <pre>__pycache__/
+*.pyc
+*.pyo
+.env
+.env.*
+*.local
+.git/
+.gitignore
+*.md
+tests/
+.pytest_cache/</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Build and test -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">3</div>
+          <h2 class="font-semibold text-gray-900">Build and test locally</h2>
+        </div>
+        <div class="relative ml-9">
+          <pre><span class="t-gray"># Build</span>
+docker build -t ar-email-agent:local .
+
+<span class="t-gray"># Run with mock data — same flag as local Python</span>
+docker run -p 8080:8080 \
+  -e IBD_TESTING=1 \
+  ar-email-agent:local
+
+<span class="t-gray"># Verify health check responds</span>
+curl http://localhost:8080/.well-known/agent.json</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="callout callout-green ml-9 mt-3">
+          You should see the agent card JSON. If you see <code>Connection refused</code>, the container exited — run <code>docker logs $(docker ps -lq)</code> to debug.
+        </div>
+      </div>
+
+      <!-- Step 4: Inspect image size -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">4</div>
+          <h2 class="font-semibold text-gray-900">Inspect image size</h2>
+        </div>
+        <div class="relative ml-9">
+          <pre>docker image inspect ar-email-agent:local \
+  --format='{{.Size}}' | numfmt --to=iec</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="text-sm text-gray-600 ml-9 mt-2">Target: under 250 MB. If it's larger, check whether large model weights are being copied into the image by mistake.</p>
+      </div>
+
+      <div class="callout callout-yellow mb-6">
+        <strong>Common gotcha:</strong> If your agent loads model weights locally (e.g. from a <code>models/</code> folder), do NOT copy them into the image. Cloud Run agents should call remote LLM APIs — never bundle weights.
+      </div>
+
+      <div class="mt-8 flex justify-between">
+        <button onclick="showSection('lab1')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">← Lab 1</button>
+        <button onclick="markDone('lab2'); showSection('lab3')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+          Done → Lab 3: Deploy
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ LAB 3: DEPLOY ══════════════════════════════════════════ -->
+    <section id="lab3" class="lab-section">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="step-badge">3</div>
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">30 minutes</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Deploy to Cloud Run</h1>
+      <p class="text-gray-500 text-sm mb-8">Push the image and get a public HTTPS URL for your agent in under 5 minutes.</p>
+
+      <!-- Step 1: Deploy -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">1</div>
+          <h2 class="font-semibold text-gray-900">Deploy with one command</h2>
+        </div>
+        <p class="text-sm text-gray-600 mb-3 ml-9"><code class="bg-gray-100 px-1 rounded text-xs">--source .</code> triggers Cloud Build to build the image for you — no separate <code>docker push</code> needed.</p>
+        <div class="relative ml-9">
+          <pre>gcloud run deploy ar-email-agent \
+  --source . \
+  --region <span class="t-cyan">$REGION</span> \
+  --allow-unauthenticated \
+  --port 8080 \
+  --set-env-vars IBD_TESTING=1 \
+  --service-account ar-email-agent-sa@<span class="t-cyan">$PROJECT_ID</span>.iam.gserviceaccount.com</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="text-sm text-gray-500 ml-9 mt-2">Build takes ~2 minutes on first run. Subsequent deployments are faster (layer cache).</p>
+      </div>
+
+      <!-- Step 2: Get URL and test -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">2</div>
+          <h2 class="font-semibold text-gray-900">Get the service URL and test</h2>
+        </div>
+        <div class="relative ml-9">
+          <pre><span class="t-green">export</span> <span class="t-cyan">SERVICE_URL</span>=$(gcloud run services describe ar-email-agent \
+  --region <span class="t-cyan">$REGION</span> \
+  --format='value(status.url)')
+
+echo <span class="t-yellow">"Agent live at: $SERVICE_URL"</span>
+
+<span class="t-gray"># Health check</span>
+curl <span class="t-cyan">$SERVICE_URL</span>/.well-known/agent.json | python3 -m json.tool
+
+<span class="t-gray"># Send a message</span>
+curl -X POST <span class="t-cyan">$SERVICE_URL</span>/ \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"tasks/send","id":1,
+       "params":{"message":{"role":"user","parts":
+       [{"type":"text","text":"Show all overdue customers"}]}}}'</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Step 3: View logs -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">3</div>
+          <h2 class="font-semibold text-gray-900">View real-time logs</h2>
+        </div>
+        <div class="relative ml-9">
+          <pre>gcloud run services logs tail ar-email-agent \
+  --region <span class="t-cyan">$REGION</span></pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="text-sm text-gray-600 ml-9 mt-2">You should see agent log lines appear as you send requests. We'll improve this in Lab 6.</p>
+      </div>
+
+      <!-- Step 4: Inspect revision -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">4</div>
+          <h2 class="font-semibold text-gray-900">Inspect the service in the Console</h2>
+        </div>
+        <p class="text-sm text-gray-600 ml-9 mb-3">Open Cloud Console → Cloud Run → ar-email-agent. Note:</p>
+        <ul class="list-disc list-inside text-sm text-gray-700 ml-9 space-y-1">
+          <li>The container URL matches <code class="bg-gray-100 px-1 rounded text-xs">$SERVICE_URL</code></li>
+          <li>The <strong>Revisions</strong> tab shows <code class="bg-gray-100 px-1 rounded text-xs">ar-email-agent-00001-xxx</code> with 100% traffic</li>
+          <li><strong>Metrics</strong> shows request count, latency, and instance count</li>
+        </ul>
+      </div>
+
+      <div class="callout callout-green mb-6">
+        🎉 Your agent is now live on the internet with a TLS-terminated HTTPS URL, auto-scaled to zero when idle.
+        That's Cloud Run's default — you pay nothing when there are no requests.
+      </div>
+
+      <div class="mt-8 flex justify-between">
+        <button onclick="showSection('lab2')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">← Lab 2</button>
+        <button onclick="markDone('lab3'); showSection('lab4')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+          Done → Lab 4: Secrets
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ LAB 4: SECRETS ════════════════════════════════════════ -->
+    <section id="lab4" class="lab-section">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="step-badge">4</div>
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">30 minutes</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Secrets &amp; Configuration</h1>
+      <p class="text-gray-500 text-sm mb-8">Never put credentials in environment variables or Docker images. Use Secret Manager.</p>
+
+      <div class="callout callout-red mb-6">
+        <strong>Never do this:</strong> <code>--set-env-vars SMTP_PASSWORD=hunter2</code><br/>
+        Env vars are visible in the Cloud Console, build logs, and <code>gcloud run services describe</code>. Treat them as public.
+      </div>
+
+      <!-- Step 1: Create service account -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">1</div>
+          <h2 class="font-semibold text-gray-900">Create a dedicated service account</h2>
+        </div>
+        <div class="relative ml-9">
+          <pre>gcloud iam service-accounts create ar-email-agent-sa \
+  --display-name="AR Email Agent"
+
+<span class="t-green">export</span> <span class="t-cyan">SA_EMAIL</span>=ar-email-agent-sa@<span class="t-cyan">$PROJECT_ID</span>.iam.gserviceaccount.com</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="text-sm text-gray-500 ml-9 mt-2">Principle of least privilege: this SA gets only the permissions the agent actually needs, nothing more.</p>
+      </div>
+
+      <!-- Step 2: Store secrets -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">2</div>
+          <h2 class="font-semibold text-gray-900">Store credentials in Secret Manager</h2>
+        </div>
+        <div class="relative ml-9">
+          <pre><span class="t-gray"># SMTP credentials for email sending</span>
+echo -n "your-smtp-user@gmail.com" | \
+  gcloud secrets create smtp-user --data-file=- --replication-policy=automatic
+
+echo -n "your-app-password-here" | \
+  gcloud secrets create smtp-password --data-file=- --replication-policy=automatic
+
+<span class="t-gray"># Verify</span>
+gcloud secrets list</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Grant access -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">3</div>
+          <h2 class="font-semibold text-gray-900">Grant Secret Manager access to the service account</h2>
+        </div>
+        <div class="relative ml-9">
+          <pre><span class="t-blue">for</span> secret in smtp-user smtp-password; <span class="t-blue">do</span>
+  gcloud secrets add-iam-policy-binding <span class="t-cyan">$secret</span> \
+    --member="serviceAccount:<span class="t-cyan">$SA_EMAIL</span>" \
+    --role="roles/secretmanager.secretAccessor"
+<span class="t-blue">done</span></pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Redeploy with secrets -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">4</div>
+          <h2 class="font-semibold text-gray-900">Redeploy with secrets bound</h2>
+        </div>
+        <p class="text-sm text-gray-600 mb-3 ml-9">Cloud Run fetches secrets at container startup and injects them as env vars. The values never appear in config.</p>
+        <div class="relative ml-9">
+          <pre>gcloud run deploy ar-email-agent \
+  --source . \
+  --region <span class="t-cyan">$REGION</span> \
+  --service-account <span class="t-cyan">$SA_EMAIL</span> \
+  --set-secrets SMTP_USER=smtp-user:latest,SMTP_PASSWORD=smtp-password:latest \
+  --set-env-vars IBD_TESTING=1,SMTP_HOST=smtp.gmail.com,SMTP_PORT=465</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Step 5: Rotate a secret -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="step-badge">5</div>
+          <h2 class="font-semibold text-gray-900">Rotate a secret without redeploying</h2>
+        </div>
+        <p class="text-sm text-gray-600 mb-3 ml-9">Add a new version. The next container startup picks it up automatically (because you used <code class="bg-gray-100 px-1 rounded text-xs">:latest</code>).</p>
+        <div class="relative ml-9">
+          <pre>echo -n "new-password-here" | \
+  gcloud secrets versions add smtp-password --data-file=-
+
+<span class="t-gray"># Force a new revision to pick it up immediately</span>
+gcloud run services update ar-email-agent \
+  --region <span class="t-cyan">$REGION</span> \
+  --description "Updated SMTP credentials"</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <div class="mt-8 flex justify-between">
+        <button onclick="showSection('lab3')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">← Lab 3</button>
+        <button onclick="markDone('lab4'); showSection('lab5')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+          Done → Lab 5: Hardening
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ LAB 5: PRODUCTION HARDENING ══════════════════════════ -->
+    <section id="lab5" class="lab-section">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="step-badge">5</div>
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">45 minutes</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Production Hardening</h1>
+      <p class="text-gray-500 text-sm mb-8">Configure health probes, resource limits, and scaling to handle real traffic.</p>
+
+      <!-- Health probes -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part A: Health probes</h2>
+        <p class="text-sm text-gray-500 mb-4">Tell Cloud Run exactly when your container is ready — and when to restart it.</p>
+
+        <div class="callout callout-blue mb-4">
+          <strong>The three probe types:</strong><br/>
+          • <strong>Startup</strong> — allows extra time for slow-starting containers. Checked only during cold start.<br/>
+          • <strong>Liveness</strong> — kills and replaces the container if it becomes unhealthy.<br/>
+          • <strong>Readiness</strong> — temporarily removes the container from the load balancer without killing it.
+        </div>
+
+        <div class="relative">
+          <pre><span class="t-gray"># service.yaml — deploy-as-config approach for precise probe control</span>
+<span class="t-blue">apiVersion</span>: serving.knative.dev/v1
+<span class="t-blue">kind</span>: Service
+<span class="t-blue">metadata</span>:
+  <span class="t-blue">name</span>: ar-email-agent
+<span class="t-blue">spec</span>:
+  <span class="t-blue">template</span>:
+    <span class="t-blue">spec</span>:
+      <span class="t-blue">serviceAccountName</span>: ar-email-agent-sa@<span class="t-cyan">PROJECT_ID</span>.iam.gserviceaccount.com
+      <span class="t-blue">containers</span>:
+      - <span class="t-blue">image</span>: gcr.io/<span class="t-cyan">PROJECT_ID</span>/ar-email-agent
+        <span class="t-blue">ports</span>:
+        - <span class="t-blue">containerPort</span>: 8080
+        <span class="t-blue">resources</span>:
+          <span class="t-blue">limits</span>:
+            <span class="t-blue">cpu</span>: <span class="t-yellow">"1"</span>
+            <span class="t-blue">memory</span>: <span class="t-yellow">512Mi</span>
+        <span class="t-blue">startupProbe</span>:
+          <span class="t-blue">httpGet</span>:
+            <span class="t-blue">path</span>: /.well-known/agent.json
+            <span class="t-blue">port</span>: 8080
+          <span class="t-blue">initialDelaySeconds</span>: 5
+          <span class="t-blue">periodSeconds</span>: 5
+          <span class="t-blue">timeoutSeconds</span>: 3
+          <span class="t-blue">failureThreshold</span>: 18    <span class="t-gray"># 90s total startup window</span>
+        <span class="t-blue">livenessProbe</span>:
+          <span class="t-blue">httpGet</span>:
+            <span class="t-blue">path</span>: /.well-known/agent.json
+            <span class="t-blue">port</span>: 8080
+          <span class="t-blue">initialDelaySeconds</span>: 15
+          <span class="t-blue">periodSeconds</span>: 10
+          <span class="t-blue">timeoutSeconds</span>: 5
+          <span class="t-blue">failureThreshold</span>: 3</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+
+        <div class="relative mt-3">
+          <pre><span class="t-gray"># Deploy from YAML (replace PROJECT_ID first)</span>
+sed -i "s/PROJECT_ID/<span class="t-cyan">$PROJECT_ID</span>/g" service.yaml
+gcloud run services replace service.yaml --region <span class="t-cyan">$REGION</span></pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Scaling -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part B: Scaling configuration</h2>
+        <p class="text-sm text-gray-500 mb-4">AI agents are usually not high-throughput — tune accordingly.</p>
+        <div class="relative">
+          <pre>gcloud run services update ar-email-agent \
+  --region <span class="t-cyan">$REGION</span> \
+  --min-instances 0 \     <span class="t-gray"># scale to zero when idle (saves cost)</span>
+  --max-instances 5 \     <span class="t-gray"># cap concurrent instances</span>
+  --concurrency 4 \       <span class="t-gray"># LLM calls are blocking — keep this low</span>
+  --timeout 120           <span class="t-gray"># agents can be slow; default 60s is often too short</span></pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+
+        <div class="callout callout-yellow mt-3">
+          <strong>Why concurrency=4 for LLM agents?</strong> Each request holds a live LLM connection while streaming.
+          High concurrency causes context-switching overhead with no throughput benefit.
+          Unlike stateless web handlers, AI agents are CPU-bound for token generation — keep concurrency low.
+        </div>
+      </div>
+
+      <!-- CPU -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part C: CPU throttling vs. always-on</h2>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="font-semibold text-gray-700 mb-1">CPU Throttled (default)</div>
+            <div class="text-gray-500 text-xs">CPU allocated only during request handling. Background tasks, cleanup code, and timers don't run between requests.</div>
+            <div class="mt-2 text-green-600 text-xs font-medium">Best for: stateless agents, cost-sensitive workloads</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="font-semibold text-gray-700 mb-1">CPU Always-On</div>
+            <div class="text-gray-500 text-xs">CPU allocated at all times when at least one instance is running. Needed for background threads, polling, scheduled cleanup.</div>
+            <div class="mt-2 text-blue-600 text-xs font-medium">Enable: <code>--no-cpu-throttling</code></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warm-up -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part D: Eliminate cold starts</h2>
+        <p class="text-sm text-gray-600 mb-3">If cold starts are unacceptable (e.g. user-facing agents), set a minimum of 1 always-warm instance:</p>
+        <div class="relative">
+          <pre>gcloud run services update ar-email-agent \
+  --region <span class="t-cyan">$REGION</span> \
+  --min-instances 1 \
+  --startup-cpu-boost    <span class="t-gray"># extra vCPU during startup only (faster init)</span></pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="text-sm text-gray-500 mt-2">Cost: ~$5/month per always-warm instance (e2-micro equivalent). Usually worth it for production agents.</p>
+      </div>
+
+      <div class="mt-8 flex justify-between">
+        <button onclick="showSection('lab4')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">← Lab 4</button>
+        <button onclick="markDone('lab5'); showSection('lab6')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+          Done → Lab 6: Observability
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ LAB 6: OBSERVABILITY ══════════════════════════════════ -->
+    <section id="lab6" class="lab-section">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="step-badge">6</div>
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">45 minutes</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Observability</h1>
+      <p class="text-gray-500 text-sm mb-8">Structured logs, distributed traces, and dashboards so you actually know what your agent is doing in production.</p>
+
+      <!-- Part A: Structured logs -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part A: Structured JSON logging</h2>
+        <p class="text-sm text-gray-600 mb-3">Cloud Logging understands structured JSON natively. Add this formatter to <code class="bg-gray-100 px-1 rounded text-xs">app/main.py</code>:</p>
+        <div class="relative">
+          <pre><span class="t-blue">import</span> json, logging, sys
+
+<span class="t-blue">class</span> <span class="t-cyan">CloudRunFormatter</span>(logging.Formatter):
+    <span class="t-blue">def</span> <span class="t-green">format</span>(self, record):
+        entry = {
+            <span class="t-yellow">"severity"</span>: record.levelname,
+            <span class="t-yellow">"message"</span>: record.getMessage(),
+            <span class="t-yellow">"logger"</span>: record.name,
+        }
+        <span class="t-gray"># Forward OpenTelemetry trace context if available</span>
+        span = trace.get_current_span()
+        ctx = span.get_span_context()
+        <span class="t-blue">if</span> ctx.is_valid:
+            entry[<span class="t-yellow">"logging.googleapis.com/trace"</span>] = \
+                f<span class="t-yellow">"projects/{PROJECT_ID}/traces/{ctx.trace_id:032x}"</span>
+            entry[<span class="t-yellow">"logging.googleapis.com/spanId"</span>] = f<span class="t-yellow">"{ctx.span_id:016x}"</span>
+        <span class="t-blue">return</span> json.dumps(entry)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(CloudRunFormatter())
+logging.root.addHandler(handler)
+logging.root.setLevel(logging.INFO)</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="callout callout-blue mt-3">
+          The <code>logging.googleapis.com/trace</code> field links log lines to their distributed trace in Cloud Trace.
+          You can click a log entry and jump directly to the span that produced it.
+        </div>
+      </div>
+
+      <!-- Part B: OpenTelemetry traces -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part B: OpenTelemetry traces to Cloud Trace</h2>
+        <p class="text-sm text-gray-600 mb-3">Add to <code class="bg-gray-100 px-1 rounded text-xs">requirements.txt</code>:</p>
+        <div class="relative">
+          <pre>opentelemetry-sdk
+opentelemetry-api
+opentelemetry-exporter-gcp-trace
+opentelemetry-instrumentation-fastapi</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="text-sm text-gray-600 mt-4 mb-3">Bootstrap telemetry in <code class="bg-gray-100 px-1 rounded text-xs">main.py</code> (before other imports):</p>
+        <div class="relative">
+          <pre><span class="t-blue">from</span> opentelemetry <span class="t-blue">import</span> trace
+<span class="t-blue">from</span> opentelemetry.sdk.trace <span class="t-blue">import</span> TracerProvider
+<span class="t-blue">from</span> opentelemetry.sdk.trace.export <span class="t-blue">import</span> BatchSpanProcessor
+<span class="t-blue">from</span> opentelemetry.exporter.cloud_trace <span class="t-blue">import</span> CloudTraceSpanExporter
+
+provider = TracerProvider()
+provider.add_span_processor(
+    BatchSpanProcessor(CloudTraceSpanExporter())
+)
+trace.set_tracer_provider(provider)</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="text-sm text-gray-600 mt-4 mb-3">Wrap agent tool calls in spans for visibility:</p>
+        <div class="relative">
+          <pre>tracer = trace.get_tracer(__name__)
+
+<span class="t-gray"># In agent_executor.py, wrap tool execution:</span>
+<span class="t-blue">with</span> tracer.start_as_current_span(<span class="t-yellow">"agent.execute"</span>,
+    attributes={<span class="t-yellow">"query"</span>: query, <span class="t-yellow">"task_id"</span>: task.id}):
+    <span class="t-blue">async for</span> item <span class="t-blue">in</span> self.agent.stream(query, ...):
+        ...</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Part C: Grant permissions and deploy -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part C: Grant trace permissions and redeploy</h2>
+        <div class="relative">
+          <pre><span class="t-gray"># Allow the service account to write traces</span>
+gcloud projects add-iam-policy-binding <span class="t-cyan">$PROJECT_ID</span> \
+  --member="serviceAccount:<span class="t-cyan">$SA_EMAIL</span>" \
+  --role="roles/cloudtrace.agent"
+
+<span class="t-gray"># Redeploy with updated code</span>
+gcloud run deploy ar-email-agent \
+  --source . \
+  --region <span class="t-cyan">$REGION</span></pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Part D: Dashboard -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part D: Build a monitoring dashboard</h2>
+        <div class="space-y-2 text-sm">
+          <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-start gap-3">
+            <span class="text-blue-500 font-bold text-xs mt-0.5">1</span>
+            <div>Open Cloud Console → <strong>Monitoring → Dashboards → Create Dashboard</strong></div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-start gap-3">
+            <span class="text-blue-500 font-bold text-xs mt-0.5">2</span>
+            <div>Add chart: metric <code class="bg-gray-100 px-1 rounded text-xs">run.googleapis.com/request_count</code>, filtered to your service</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-start gap-3">
+            <span class="text-blue-500 font-bold text-xs mt-0.5">3</span>
+            <div>Add chart: metric <code class="bg-gray-100 px-1 rounded text-xs">run.googleapis.com/request_latencies</code> — p50, p95, p99</div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-start gap-3">
+            <span class="text-blue-500 font-bold text-xs mt-0.5">4</span>
+            <div>Add chart: metric <code class="bg-gray-100 px-1 rounded text-xs">run.googleapis.com/container/instance_count</code></div>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-start gap-3">
+            <span class="text-blue-500 font-bold text-xs mt-0.5">5</span>
+            <div>Create an alerting policy: notify when <code class="bg-gray-100 px-1 rounded text-xs">request_latencies p99 &gt; 10s</code></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 flex justify-between">
+        <button onclick="showSection('lab5')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">← Lab 5</button>
+        <button onclick="markDone('lab6'); showSection('lab7')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+          Done → Lab 7: Scaling
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ LAB 7: SCALING & TRAFFIC ══════════════════════════════ -->
+    <section id="lab7" class="lab-section">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="step-badge">7</div>
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">30 minutes</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Scaling &amp; Safe Rollouts</h1>
+      <p class="text-gray-500 text-sm mb-8">Deploy a new revision without downtime using traffic splitting.</p>
+
+      <!-- Traffic splitting -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part A: Deploy a new revision with no traffic</h2>
+        <div class="relative">
+          <pre><span class="t-gray"># Deploy v2 — send 0% traffic to it initially</span>
+gcloud run deploy ar-email-agent \
+  --source . \
+  --region <span class="t-cyan">$REGION</span> \
+  --no-traffic \
+  --tag canary
+
+<span class="t-gray"># Get the canary URL (tagged revisions get a dedicated URL)</span>
+gcloud run services describe ar-email-agent \
+  --region <span class="t-cyan">$REGION</span> \
+  --format='value(status.traffic)'</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="text-sm text-gray-600 mt-3">With <code class="bg-gray-100 px-1 rounded text-xs">--tag canary</code>, Cloud Run gives the new revision its own URL: <code class="bg-gray-100 px-1 rounded text-xs">https://canary---ar-email-agent-xxx.run.app</code>.
+        Test it directly without affecting live users.</p>
+      </div>
+
+      <!-- Gradual rollout -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part B: Gradually shift traffic</h2>
+        <div class="relative">
+          <pre><span class="t-gray"># Get revision names</span>
+gcloud run revisions list --service ar-email-agent --region <span class="t-cyan">$REGION</span>
+
+<span class="t-gray"># 10% canary, 90% stable</span>
+gcloud run services update-traffic ar-email-agent \
+  --region <span class="t-cyan">$REGION</span> \
+  --to-tags canary=10
+
+<span class="t-gray"># Watch metrics split in Cloud Monitoring, then promote to 100%</span>
+gcloud run services update-traffic ar-email-agent \
+  --region <span class="t-cyan">$REGION</span> \
+  --to-latest</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Rollback -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part C: Instant rollback</h2>
+        <p class="text-sm text-gray-600 mb-3">If something goes wrong, roll back to the previous stable revision in seconds:</p>
+        <div class="relative">
+          <pre><span class="t-gray"># List revisions to find the stable one</span>
+gcloud run revisions list --service ar-email-agent \
+  --region <span class="t-cyan">$REGION</span> --format='table(name,status.conditions[0].type)'
+
+<span class="t-gray"># Roll back immediately — all traffic to the stable revision</span>
+gcloud run services update-traffic ar-email-agent \
+  --region <span class="t-cyan">$REGION</span> \
+  --to-revisions ar-email-agent-00001-xxx=100</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="callout callout-green mt-3">
+          Cloud Run keeps every revision you've deployed. Rollbacks are instant — it's just a traffic pointer change, not a redeploy.
+        </div>
+      </div>
+
+      <!-- Load test -->
+      <div class="mb-8">
+        <h2 class="font-semibold text-gray-900 mb-1">Part D: Quick load test</h2>
+        <p class="text-sm text-gray-600 mb-3">Watch Cloud Run auto-scale in real time:</p>
+        <div class="relative">
+          <pre><span class="t-gray"># Install hey (HTTP load tester)</span>
+brew install hey   <span class="t-gray"># or: go install github.com/rakyll/hey@latest</span>
+
+<span class="t-gray"># 50 concurrent requests for 30 seconds</span>
+hey -c 50 -z 30s <span class="t-cyan">$SERVICE_URL</span>/.well-known/agent.json</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="text-sm text-gray-600 mt-3">Open Cloud Console → Cloud Run → ar-email-agent → <strong>Metrics</strong> and watch instance count rise, then fall back to minimum after the test ends.</p>
+      </div>
+
+      <div class="callout callout-green mb-6">
+        🎉 Congratulations — you have a production-ready, observable, auto-scaling AI agent on Cloud Run.
+      </div>
+
+      <div class="mt-8 flex justify-between">
+        <button onclick="showSection('lab6')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">← Lab 6</button>
+        <button onclick="markDone('lab7'); showSection('cleanup')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+          Done → Cleanup
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ CLEANUP ════════════════════════════════════════════════ -->
+    <section id="cleanup" class="lab-section">
+      <div class="mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">End of Lab</div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Cleanup</h1>
+      <p class="text-gray-500 text-sm mb-8">Remove resources to avoid ongoing charges.</p>
+
+      <div class="callout callout-yellow mb-6">
+        If you're using a shared lab project, skip this — the project will be deleted after the session.
+        Only run these commands if it's your own GCP account.
+      </div>
+
+      <div class="mb-8">
+        <div class="relative">
+          <pre><span class="t-gray"># Delete the Cloud Run service</span>
+gcloud run services delete ar-email-agent --region <span class="t-cyan">$REGION</span> --quiet
+
+<span class="t-gray"># Delete secrets</span>
+gcloud secrets delete smtp-user --quiet
+gcloud secrets delete smtp-password --quiet
+
+<span class="t-gray"># Delete container images</span>
+gcloud artifacts docker images delete \
+  gcr.io/<span class="t-cyan">$PROJECT_ID</span>/ar-email-agent --quiet
+
+<span class="t-gray"># Delete service account</span>
+gcloud iam service-accounts delete <span class="t-cyan">$SA_EMAIL</span> --quiet</pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- What's next -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+        <h2 class="font-semibold text-gray-900 mb-4">What's next</h2>
+        <div class="space-y-3 text-sm">
+          <div class="flex gap-3">
+            <span class="text-blue-500">→</span>
+            <div><strong>Connect real MCP tools</strong> — swap <code class="bg-gray-100 px-1 rounded text-xs">IBD_TESTING=1</code> for real Agent Gateway credentials and watch the same deployment hit live SAP or Google Workspace APIs</div>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-blue-500">→</span>
+            <div><strong>Multi-agent on Cloud Run</strong> — deploy a second agent and use A2A to have them call each other. Each is its own Cloud Run service, discoverable by URL.</div>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-blue-500">→</span>
+            <div><strong>Cloud Run Jobs</strong> — for batch agent workloads (process 1000 overdue accounts overnight), use Cloud Run Jobs instead of a service</div>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-blue-500">→</span>
+            <div><strong>Vertex AI Agent Builder</strong> — for managed agent orchestration without maintaining your own container</div>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-blue-500">→</span>
+            <div><strong>CI/CD with Cloud Deploy</strong> — automate the build → canary → promote pipeline using Cloud Build triggers on push</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resources -->
+      <div class="bg-gray-50 rounded-xl border border-gray-200 p-5">
+        <h2 class="font-semibold text-gray-700 mb-3 text-sm">Resources</h2>
+        <div class="space-y-1.5 text-sm">
+          <div class="text-blue-600">cloud.google.com/run/docs</div>
+          <div class="text-blue-600">cloud.google.com/run/docs/configuring/healthchecks</div>
+          <div class="text-blue-600">cloud.google.com/secret-manager/docs</div>
+          <div class="text-blue-600">opentelemetry.io/docs/instrumentation/python</div>
+          <div class="text-blue-600">google.github.io/A2A</div>
+        </div>
+      </div>
+
+      <div class="mt-8 flex justify-between">
+        <button onclick="showSection('lab7')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">← Lab 7</button>
+        <button onclick="showSection('overview')" class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">
+          ← Back to Overview
+        </button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────── -->
+<footer class="border-t border-gray-200 bg-white mt-8">
+  <div class="max-w-screen-xl mx-auto px-6 py-4 flex items-center justify-between text-xs text-gray-400">
+    <span>Google Cloud Labs · Accelerate AI with Cloud Run · Sunnyvale · August 13, 2026</span>
+    <span>Labs 0–7 · ~6 hours</span>
+  </div>
+</footer>
+
+<script>
+  const LABS = ['lab0','lab1','lab2','lab3','lab4','lab5','lab6','lab7'];
+  const completed = new Set();
+
+  function showSection(id) {
+    // Hide all sections
+    document.querySelectorAll('.lab-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+    // Show target
+    document.getElementById(id).classList.add('active');
+
+    // Highlight nav item
+    document.querySelectorAll('.nav-item').forEach(el => {
+      if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(`'${id}'`)) {
+        el.classList.add('active');
+      }
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function markDone(labId) {
+    completed.add(labId);
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const count = completed.size;
+    document.getElementById('overall-progress').textContent = `${count} / 7 labs`;
+    if (count === 7) {
+      document.getElementById('overall-progress').textContent = '✓ All labs done!';
+      document.getElementById('overall-progress').classList.add('text-green-600');
+    }
+  }
+
+  function copyCode(btn) {
+    const pre = btn.closest('div').querySelector('pre');
+    const text = pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+</script>
+</body>
+</html>

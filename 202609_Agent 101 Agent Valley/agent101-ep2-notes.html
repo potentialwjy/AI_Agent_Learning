@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Buildyard — Workflows at Agent Valley 学习笔记</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: #333;
+    background: #f5f5f5;
+  }
+
+  .header {
+    background: #1a73e8;
+    color: white;
+    padding: 20px 32px;
+  }
+  .header h1 { font-size: 22px; font-weight: 600; }
+  .header p  { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+  .layout { display: flex; min-height: calc(100vh - 72px); }
+
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: white;
+    border-right: 1px solid #e0e0e0;
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sidebar-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    padding: 0 20px 8px;
+  }
+  .tab-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: #555;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+    line-height: 1.4;
+  }
+  .tab-btn:hover  { background: #f0f4ff; color: #1a73e8; }
+  .tab-btn.active { background: #e8f0fe; color: #1a73e8; border-left-color: #1a73e8; font-weight: 600; }
+  .tab-num {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: #555;
+    font-size: 11px;
+    text-align: center;
+    line-height: 20px;
+    margin-right: 8px;
+  }
+  .tab-btn.active .tab-num { background: #1a73e8; color: white; }
+
+  .content { flex: 1; padding: 32px 48px; max-width: 860px; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  h2.page-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+  }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 28px; }
+
+  .intro-box {
+    background: #e8f0fe;
+    border-left: 4px solid #1a73e8;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    font-size: 14.5px;
+  }
+  .intro-box strong { color: #1a73e8; }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 32px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e8f0fe;
+  }
+  h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    margin: 20px 0 8px;
+  }
+  p { margin-bottom: 12px; }
+
+  code {
+    background: #f1f3f4;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: "Roboto Mono", "SF Mono", Consolas, monospace;
+    font-size: 13px;
+    color: #c5221f;
+  }
+  pre {
+    background: #282c34;
+    color: #abb2bf;
+    border-radius: 6px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin: 12px 0 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    font-family: "Roboto Mono", "SF Mono", Consolas, monospace;
+  }
+  pre .kw  { color: #c678dd; }
+  pre .str { color: #98c379; }
+  pre .cm  { color: #7f848e; font-style: italic; }
+  pre .fn  { color: #61afef; }
+  pre .var { color: #e06c75; }
+  pre .num { color: #d19a66; }
+  pre .op  { color: #56b6c2; }
+
+  .callout {
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .callout.tip   { background: #e6f4ea; border-left: 4px solid #34a853; }
+  .callout.warn  { background: #fef7e0; border-left: 4px solid #fbbc04; }
+  .callout.info  { background: #e8f0fe; border-left: 4px solid #4285f4; }
+  .callout.danger{ background: #fce8e6; border-left: 4px solid #ea4335; }
+  .callout-title { font-weight: 700; margin-bottom: 4px; }
+  .callout.tip   .callout-title { color: #137333; }
+  .callout.warn  .callout-title { color: #9c6e00; }
+  .callout.info  .callout-title { color: #1a73e8; }
+  .callout.danger .callout-title { color: #c5221f; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+  th {
+    background: #1a73e8;
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td { padding: 9px 14px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8f9fa; }
+
+  .concept-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 16px 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .concept-card .label {
+    display: inline-block;
+    background: #1a73e8;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    letter-spacing: .5px;
+  }
+  .concept-card .label.green  { background: #34a853; }
+  .concept-card .label.orange { background: #fbbc04; color: #555; }
+  .concept-card .label.red    { background: #ea4335; }
+
+  ul.bullets { padding-left: 22px; margin-bottom: 14px; }
+  ul.bullets li { margin-bottom: 6px; }
+
+  .nav-btns {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+  }
+  .nav-btn {
+    padding: 9px 20px;
+    border-radius: 4px;
+    border: 1px solid #1a73e8;
+    background: white;
+    color: #1a73e8;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .nav-btn:hover { background: #1a73e8; color: white; }
+  .nav-btn.primary { background: #1a73e8; color: white; }
+  .nav-btn.primary:hover { background: #1557b0; }
+  .nav-btn:disabled { opacity: .35; cursor: default; }
+
+  /* ── Wire / flow diagrams ── */
+  .wire-diagram {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 24px 20px;
+    text-align: center;
+    margin: 20px 0;
+    font-size: 14px;
+    overflow-x: auto;
+  }
+  .wire-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+  .wire-box {
+    display: inline-block;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .wb-blue  { background: #e8f0fe; color: #1a73e8; border: 2px solid #1a73e8; }
+  .wb-green { background: #e6f4ea; color: #137333; border: 2px solid #34a853; }
+  .wb-orange{ background: #fef3e0; color: #9c6e00; border: 2px solid #fbbc04; }
+  .wb-red   { background: #fce8e6; color: #c5221f; border: 2px solid #ea4335; }
+  .wb-gray  { background: #f1f3f4; color: #555;    border: 2px solid #aaa; }
+  .wire-arrow { color: #aaa; font-size: 20px; margin: 0 6px; vertical-align: middle; }
+  .wire-label { font-size: 11px; color: #888; margin-top: 4px; }
+  .branch-col { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .wire-divider { border: none; border-top: 1px dashed #ddd; margin: 16px 0; }
+
+  .chapter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1a73e8;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+
+  .edit-badge {
+    display: inline-block;
+    background: #34a853;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 10px;
+    margin-left: 8px;
+    letter-spacing: .4px;
+    vertical-align: middle;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .summary-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .summary-card .icon { font-size: 28px; margin-bottom: 8px; }
+  .summary-card .title { font-size: 13px; font-weight: 700; color: #1a73e8; margin-bottom: 4px; }
+  .summary-card .desc { font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>The Buildyard — Workflows at Agent Valley</h1>
+  <p>Google Codelabs · ADK 2 · Agent 101 Week 2 · 学习笔记 · 2026</p>
+</div>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar">
+    <div class="sidebar-title">章节导航</div>
+    <button class="tab-btn active" onclick="show(0,this)">
+      <span class="tab-num">0</span>这个 Lab 讲什么
+    </button>
+    <button class="tab-btn" onclick="show(1,this)">
+      <span class="tab-num">1</span>核心问题：谁决定下一步
+    </button>
+    <button class="tab-btn" onclick="show(2,this)">
+      <span class="tab-num">2</span>Ch2 — 顺序执行
+    </button>
+    <button class="tab-btn" onclick="show(3,this)">
+      <span class="tab-num">3</span>Ch3 — 并行分支
+    </button>
+    <button class="tab-btn" onclick="show(4,this)">
+      <span class="tab-num">4</span>Ch4 — 条件路由
+    </button>
+    <button class="tab-btn" onclick="show(5,this)">
+      <span class="tab-num">5</span>数据如何在节点间流动
+    </button>
+    <button class="tab-btn" onclick="show(6,this)">
+      <span class="tab-num">6</span>三种模式对比 &amp; 选择指南
+    </button>
+    <button class="tab-btn" onclick="show(7,this)">
+      <span class="tab-num">7</span>关键代码速查
+    </button>
+  </nav>
+
+  <!-- ── Content ── -->
+  <main class="content">
+
+    <!-- ── Pane 0: 概览 ── -->
+    <div class="tab-pane active" id="pane-0">
+      <h2 class="page-title">这个 Lab 讲什么？</h2>
+      <p class="subtitle">Agent 101 Week 2 · The Buildyard · ~1 小时完成</p>
+
+      <div class="intro-box">
+        <strong>一句话总结：</strong>单个 Agent 无法完成整个任务。这个 Lab 教你把多个 Agent 和函数 <em>串起来</em>——决定谁先跑、谁并行跑、谁根据结果决定下一步。
+      </div>
+
+      <h3>场景故事：Agent Valley 的建筑工地</h3>
+      <p>你是 Agent Valley 的设计师，要为一块地设计小屋 (cottage)。这不是一个人能完成的工作：</p>
+      <ul class="bullets">
+        <li><strong>地质专家</strong> 需要调查地基（计算土壤承重）</li>
+        <li><strong>仓库管理员</strong> 需要查库存有哪些建材</li>
+        <li><strong>气象分析师</strong> 需要分析当地气候，决定屋顶坡度和朝向</li>
+        <li><strong>设计师</strong> 汇总三方结论，生成设计图</li>
+        <li><strong>审核员</strong> 检查材料承重是否匹配，如果不行则打回重做</li>
+      </ul>
+
+      <p>Lab 的核心是：<strong>只改 <code>yard/agent.py</code> 底部的 <code>edges</code> 列表</strong>，每次取消一行注释（删掉 <code># </code>），观察 workflow 如何改变。</p>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="icon">→</div>
+          <div class="title">Chapter 2</div>
+          <div class="desc">顺序执行<br>A 完成再跑 B</div>
+        </div>
+        <div class="summary-card">
+          <div class="icon">⋈</div>
+          <div class="title">Chapter 3</div>
+          <div class="desc">并行分支<br>三个专家同时调查</div>
+        </div>
+        <div class="summary-card">
+          <div class="icon">⑂</div>
+          <div class="title">Chapter 4</div>
+          <div class="desc">条件路由<br>审核通过/打回重做</div>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-title">💡 Lab 的精妙设计</div>
+        整个 Lab 只需要编辑 <strong>三行代码</strong>（每次取消一行注释）。这不是偷懒——它是刻意的设计：让你专注于<em>理解结构</em>，而不是被语法细节分心。
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" disabled>← 上一节</button>
+        <button class="nav-btn primary" onclick="show(1,null)">下一节 →</button>
+      </div>
+    </div>
+
+    <!-- ── Pane 1: 核心问题 ── -->
+    <div class="tab-pane" id="pane-1">
+      <h2 class="page-title">核心问题：谁决定下一步？</h2>
+      <p class="subtitle">Workflow 设计的根本问题</p>
+
+      <div class="intro-box">
+        <strong>Lab 的灵魂问题：</strong>在一个多步骤任务里，<em>谁</em>来决定接下来运行哪个节点？答案不同，workflow 的能力和风险也完全不同。
+      </div>
+
+      <h3>三种答案，三种模式</h3>
+
+      <div class="concept-card">
+        <div class="label">模式 1 — Graph 定义</div>
+        <h4>由边（edges）决定</h4>
+        <p>你在代码里写好 <code>edges</code> 列表，执行顺序完全由图结构决定。运行时不会"思考"，只跟着边走。</p>
+        <ul class="bullets">
+          <li>✅ 保证执行顺序，不会跳步</li>
+          <li>✅ 可预测、可测试</li>
+          <li>❌ 灵活性有限，路径需提前写死</li>
+        </ul>
+      </div>
+
+      <div class="concept-card">
+        <div class="label green">模式 2 — 模型驱动</div>
+        <h4>由 LLM 决定</h4>
+        <p>让语言模型根据上下文判断下一步走哪个分支。Chapter 4 的字典路由就是这种——<code>inspect</code> 节点输出 <code>"rework"</code> 或 <code>"pass"</code>，由模型的回答决定走哪条路。</p>
+        <ul class="bullets">
+          <li>✅ 智能灵活，能处理复杂判断</li>
+          <li>❌ 失去执行保证（模型可能选错路）</li>
+          <li>❌ 结果不完全可预测</li>
+        </ul>
+      </div>
+
+      <div class="concept-card">
+        <div class="label orange">模式 3 — 代码编排</div>
+        <h4>由 Python 逻辑决定</h4>
+        <p>用 Python 代码（if/else、循环等）动态决定执行路径，不依赖 edges 列表。</p>
+        <ul class="bullets">
+          <li>✅ 最灵活，可以做任何动态分支</li>
+          <li>❌ 没有自动暂停/恢复（crash 后无法续跑）</li>
+          <li>❌ 需要自己管理状态</li>
+        </ul>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-title">⚠️ 关键心智模型</div>
+        选模式不是选"最强的"，而是选"最匹配你的可预测性需求"的。金融交易流程要用模式 1（不能让 LLM 随意决定是否扣款）；创意写作助手可以用模式 2（灵活更重要）。
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="show(0,null)">← 上一节</button>
+        <button class="nav-btn primary" onclick="show(2,null)">下一节 →</button>
+      </div>
+    </div>
+
+    <!-- ── Pane 2: Ch2 顺序 ── -->
+    <div class="tab-pane" id="pane-2">
+      <h2 class="page-title">Chapter 2 — 顺序执行</h2>
+      <p class="subtitle"><span class="edit-badge">Edit 1</span> 取消注释 <code>blueprint,</code></p>
+
+      <div class="intro-box">
+        <strong>一个边 = 一条数据通道。</strong>把两个节点用边连接，上游的输出自动成为下游的输入。
+      </div>
+
+      <h3>做什么改动</h3>
+      <p>打开 <code>yard/agent.py</code>，找到文件末尾的 <code>edges</code> 列表，取消 <code>blueprint,</code> 前的注释：</p>
+      <pre>
+<span class="cm"># 改前</span>
+edges = [
+    survey,
+    <span class="cm"># blueprint,</span>   <span class="cm"># ← 这行被注释掉了</span>
+]
+
+<span class="cm"># 改后（删掉 "# "）</span>
+edges = [
+    survey,
+    <span class="var">blueprint</span>,     <span class="cm"># ← 现在加入了</span>
+]</pre>
+
+      <h3>执行流程变化</h3>
+
+      <div class="wire-diagram">
+        <div style="margin-bottom: 8px; font-size: 12px; color: #888;">改前（只有 survey）</div>
+        <div class="wire-row">
+          <span class="wire-box wb-gray">START</span>
+          <span class="wire-arrow">→</span>
+          <span class="wire-box wb-blue">survey</span>
+          <span class="wire-arrow">→</span>
+          <span class="wire-box wb-gray">END</span>
+        </div>
+        <hr class="wire-divider">
+        <div style="margin-bottom: 8px; font-size: 12px; color: #888;">改后（survey → blueprint）</div>
+        <div class="wire-row">
+          <span class="wire-box wb-gray">START</span>
+          <span class="wire-arrow">→</span>
+          <span class="wire-box wb-blue">survey</span>
+          <span class="wire-arrow">→</span>
+          <span class="wire-box wb-green">blueprint</span>
+          <span class="wire-arrow">→</span>
+          <span class="wire-box wb-gray">END</span>
+        </div>
+        <div class="wire-label">survey 的输出自动沿边流入 blueprint 的输入</div>
+      </div>
+
+      <h3>关键理解</h3>
+
+      <div class="concept-card">
+        <div class="label">数据自动流动</div>
+        <p>不需要手动把 survey 的结果传给 blueprint。<strong>边（edge）本身就是数据通道</strong>——上游节点完成后，结果自动沿边流向下游节点。</p>
+      </div>
+
+      <div class="concept-card">
+        <div class="label green">节点类型无关</div>
+        <p>无论节点是 Agent（调用 LLM 的）、普通 Function（纯 Python 计算），还是带工具的 Agent，在 edges 列表里的写法完全一样——把名字放进去就行。</p>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">✅ 可以观察到什么</div>
+        运行后你会看到设计图里多了蓝图内容：survey 调查了地基情况，blueprint 拿到这个结果后画出了初始设计草图。两步是严格顺序的——survey 100% 完成后才启动 blueprint。
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="show(1,null)">← 上一节</button>
+        <button class="nav-btn primary" onclick="show(3,null)">下一节 →</button>
+      </div>
+    </div>
+
+    <!-- ── Pane 3: Ch3 并行 ── -->
+    <div class="tab-pane" id="pane-3">
+      <h2 class="page-title">Chapter 3 — 并行分支</h2>
+      <p class="subtitle"><span class="edit-badge">Edit 2</span> 取消注释 <code>(ground, stock, weather), join, render, inspect,</code></p>
+
+      <div class="intro-box">
+        <strong>括号 = 同时跑。</strong>把多个节点用 <code>()</code> 括起来，ADK 会并行启动它们，用 <code>join</code> 节点收集所有结果。
+      </div>
+
+      <h3>做什么改动</h3>
+      <pre>
+<span class="cm"># 改前</span>
+edges = [
+    survey,
+    blueprint,
+    <span class="cm"># (ground, stock, weather), join, render, inspect,</span>
+]
+
+<span class="cm"># 改后</span>
+edges = [
+    survey,
+    blueprint,
+    <span class="op">(</span><span class="var">ground</span>, <span class="var">stock</span>, <span class="var">weather</span><span class="op">)</span>, <span class="var">join</span>, <span class="var">render</span>, <span class="var">inspect</span>,
+]</pre>
+
+      <h3>执行流程</h3>
+
+      <div class="wire-diagram">
+        <div class="wire-row">
+          <span class="wire-box wb-gray">START</span>
+          <span class="wire-arrow">→</span>
+          <span class="wire-box wb-blue">survey</span>
+          <span class="wire-arrow">→</span>
+          <span class="wire-box wb-blue">blueprint</span>
+        </div>
+        <div style="margin: 10px 0; color: #aaa; font-size: 20px;">↓ 并行启动</div>
+        <div class="wire-row">
+          <div class="branch-col">
+            <span class="wire-box wb-green">ground</span>
+            <span style="font-size:11px;color:#888">土壤计算<br>（Python 函数）</span>
+          </div>
+          <span style="color:#ddd;font-size:24px;align-self:center">⋮</span>
+          <div class="branch-col">
+            <span class="wire-box wb-orange">stock</span>
+            <span style="font-size:11px;color:#888">查库存<br>（带工具的 Agent）</span>
+          </div>
+          <span style="color:#ddd;font-size:24px;align-self:center">⋮</span>
+          <div class="branch-col">
+            <span class="wire-box wb-blue">weather</span>
+            <span style="font-size:11px;color:#888">气候分析<br>（Agent）</span>
+          </div>
+        </div>
+        <div style="margin: 10px 0; color: #aaa; font-size: 20px;">↓ 全部完成后汇聚</div>
+        <div class="wire-row">
+          <span class="wire-box wb-gray">join</span>
+          <span class="wire-arrow">→</span>
+          <span class="wire-box wb-green">render</span>
+          <span class="wire-arrow">→</span>
+          <span class="wire-box wb-blue">inspect</span>
+          <span class="wire-arrow">→</span>
+          <span class="wire-box wb-gray">END</span>
+        </div>
+        <div class="wire-label">三个分支完成速度不同，join 等待最慢的那个</div>
+      </div>
+
+      <h3>三个并行节点的不同类型</h3>
+      <table>
+        <thead>
+          <tr><th>节点</th><th>类型</th><th>做什么</th><th>为什么能并行</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>ground</code></td>
+            <td>普通 Python 函数</td>
+            <td>土壤承重算术计算（确定性）</td>
+            <td>纯计算，不依赖其他节点</td>
+          </tr>
+          <tr>
+            <td><code>stock</code></td>
+            <td>带工具的 Agent</td>
+            <td>查询建材库存</td>
+            <td>查询外部数据，独立的</td>
+          </tr>
+          <tr>
+            <td><code>weather</code></td>
+            <td>Agent</td>
+            <td>分析气候数据</td>
+            <td>分析外部数据，独立的</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>join 节点怎么工作</h3>
+      <div class="concept-card">
+        <div class="label">Join 的输出格式</div>
+        <p><code>join</code> 节点等待所有并行分支完成，然后把它们的结果合并成一个<strong>列表</strong>，每条结果都带有来源标签：</p>
+        <pre>
+[
+  { <span class="str">"branch"</span>: <span class="str">"ground"</span>, <span class="str">"result"</span>: <span class="str">"需要石基，深度 60cm..."</span> },
+  { <span class="str">"branch"</span>: <span class="str">"stock"</span>,  <span class="str">"result"</span>: <span class="str">"有花岗岩 200 块，木材 50 根..."</span> },
+  { <span class="str">"branch"</span>: <span class="str">"weather"</span>,<span class="str">"result"</span>: <span class="str">"年均降水 1200mm，建议坡度 35°..."</span> }
+]</pre>
+        <p>下游节点（<code>render</code>）拿到这个列表，才能综合三方信息生成设计图。</p>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-title">⚠️ 并行不是万能的</div>
+        Lab 特别强调：<strong>三个相同的 prompt 不应该并行</strong>，那只是浪费，该合并成一个调用。并行的价值在于分支"本质不同"——不同工具、不同数据源、不同专长。
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">✅ 可以观察到什么</div>
+        三个分支完成的时间不同（ground 是纯计算所以最快，weather/stock 需要 LLM 调用）。设计图会因库存和气候数据不同而变化——用石基还是抬高基础，坡度多少度。
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="show(2,null)">← 上一节</button>
+        <button class="nav-btn primary" onclick="show(4,null)">下一节 →</button>
+      </div>
+    </div>
+
+    <!-- ── Pane 4: Ch4 条件路由 ── -->
+    <div class="tab-pane" id="pane-4">
+      <h2 class="page-title">Chapter 4 — 条件路由</h2>
+      <p class="subtitle"><span class="edit-badge">Edit 3</span> 取消注释 <code>{"rework": stock, "pass": finish},</code></p>
+
+      <div class="intro-box">
+        <strong>字典 = 路口。</strong>节点的输出决定走哪条路——<code>"pass"</code> 走向完成，<code>"rework"</code> 打回重新调查。
+      </div>
+
+      <h3>做什么改动</h3>
+      <pre>
+<span class="cm"># 改前（inspect 只是结束）</span>
+edges = [
+    ...
+    inspect,
+]
+
+<span class="cm"># 改后（inspect 后面接路由字典）</span>
+edges = [
+    ...
+    inspect,
+    {<span class="str">"rework"</span>: <span class="var">stock</span>, <span class="str">"pass"</span>: <span class="var">finish</span>},
+]</pre>
+
+      <h3>执行流程（含循环）</h3>
+
+      <div class="wire-diagram">
+        <div class="wire-row">
+          <span class="wire-box wb-blue">inspect</span>
+          <span class="wire-arrow">→</span>
+          <span style="font-size:13px; background:#f1f3f4; border:2px solid #aaa; border-radius:6px; padding:8px 12px; font-weight:600;">
+            路由字典<br>
+            <span style="color:#ea4335; font-size:12px">"rework" → stock</span><br>
+            <span style="color:#34a853; font-size:12px">"pass" → finish</span>
+          </span>
+        </div>
+        <div class="wire-row" style="margin-top: 12px; gap: 32px;">
+          <div style="text-align:center">
+            <div style="color:#ea4335; font-size:12px; margin-bottom:6px;">如果材料不匹配</div>
+            <span class="wire-box wb-red">stock</span>
+            <div style="color:#888; font-size:11px; margin-top:4px;">重新查库存 → 继续 render → inspect…</div>
+          </div>
+          <div style="text-align:center">
+            <div style="color:#34a853; font-size:12px; margin-bottom:6px;">如果设计合格</div>
+            <span class="wire-box wb-green">finish</span>
+            <div style="color:#888; font-size:11px; margin-top:4px;">输出最终设计图 → END</div>
+          </div>
+        </div>
+        <div class="wire-label" style="margin-top:12px">inspect 输出的文字内容决定走哪条分支</div>
+      </div>
+
+      <h3>路由的工作原理</h3>
+      <div class="concept-card">
+        <div class="label red">inspect 节点如何触发路由</div>
+        <p><code>inspect</code> 是一个 Agent，它的 prompt 要求它在回答末尾输出 <code>rework</code> 或 <code>pass</code> 这个关键词。ADK 读取这个关键词，然后查字典决定下一个节点：</p>
+        <pre>
+<span class="cm"># 字典的语义</span>
+{
+  <span class="str">"rework"</span>: <span class="var">stock</span>,   <span class="cm"># inspect 说 "rework" → 跳回 stock 节点</span>
+  <span class="str">"pass"</span>:   <span class="var">finish</span>,  <span class="cm"># inspect 说 "pass"   → 走向 finish 节点</span>
+}</pre>
+        <p>这是<strong>模型驱动路由</strong>——最终是 LLM 的输出决定走哪条路，不是代码的 if/else。</p>
+      </div>
+
+      <h3>循环的意义</h3>
+      <p>当 <code>inspect</code> 输出 <code>"rework"</code>，执行流会跳回 <code>stock</code>，然后重新经过 <code>render</code> 和 <code>inspect</code>。这形成了一个<strong>反馈循环</strong>：</p>
+      <ul class="bullets">
+        <li>三个专家意见有冲突时（例如库存没有气候要求的防水材料），自动触发重新调查</li>
+        <li>这是 agent workflow 的核心能力之一——<strong>自我纠错</strong></li>
+        <li>Loop 直到 inspect 满意为止（实际代码会设置最大循环次数防止死循环）</li>
+      </ul>
+
+      <div class="callout info">
+        <div class="callout-title">💡 字典路由 vs. 边列表</div>
+        普通边（<code>edges</code> 里的名字）是"必然走这条路"。字典是"根据结果走不同的路"。两者可以混用——在同一个 edges 列表里，顺序项和字典项交替出现。
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="show(3,null)">← 上一节</button>
+        <button class="nav-btn primary" onclick="show(5,null)">下一节 →</button>
+      </div>
+    </div>
+
+    <!-- ── Pane 5: 数据流动 ── -->
+    <div class="tab-pane" id="pane-5">
+      <h2 class="page-title">数据如何在节点间流动</h2>
+      <p class="subtitle">理解 edges 传值 vs. state 共享</p>
+
+      <div class="intro-box">
+        ADK 有<strong>两种数据通道</strong>：节点之间用边自动传值，节点内部用 <code>tool_context.state</code> 共享状态。搞清楚这两条通道，就能写出干净的 workflow。
+      </div>
+
+      <h3>通道 1 — 沿边传值（节点间）</h3>
+      <div class="concept-card">
+        <div class="label">Edge Data Flow</div>
+        <p>当一个节点完成并有输出结果时，ADK <strong>自动</strong>把这个结果传给 edges 列表里的下一个节点作为输入。</p>
+        <pre>
+<span class="cm"># survey 的输出 → 自动成为 blueprint 的输入</span>
+edges = [<span class="var">survey</span>, <span class="var">blueprint</span>]
+
+<span class="cm"># 不需要手动写：</span>
+<span class="cm"># result = await survey.run()</span>
+<span class="cm"># await blueprint.run(input=result)   ← ADK 帮你做了这步</span></pre>
+        <p>并行分支（tuple）的每个分支各自拿到上游的相同输出，完成后统一交给 <code>join</code>。</p>
+      </div>
+
+      <h3>通道 2 — tool_context.state（节点内部）</h3>
+      <div class="concept-card">
+        <div class="label green">State Dict</div>
+        <p>在同一个节点内部（Agent 和它的工具之间），用共享字典 <code>tool_context.state</code> 交换数据。</p>
+        <pre>
+<span class="cm"># 工具写入 state</span>
+<span class="kw">def</span> <span class="fn">check_stock</span>(tool_context):
+    result = query_inventory()
+    tool_context.state[<span class="str">"available_materials"</span>] = result
+    <span class="kw">return</span> result
+
+<span class="cm"># 同一节点的另一个工具读取 state</span>
+<span class="kw">def</span> <span class="fn">calculate_cost</span>(tool_context):
+    materials = tool_context.state[<span class="str">"available_materials"</span>]
+    <span class="cm"># 用已有的库存数据计算成本，不用再查一次</span></pre>
+        <p>State 是节点内部的"便签纸"，代码读、模型只能通过工具间接影响它。</p>
+      </div>
+
+      <h3>对比总结</h3>
+      <table>
+        <thead>
+          <tr><th>维度</th><th>边传值（Edge）</th><th>状态字典（State）</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>作用域</td><td>节点与节点之间</td><td>节点内部（Agent ↔ 工具）</td></tr>
+          <tr><td>触发时机</td><td>节点完成时自动传递</td><td>工具执行时主动读写</td></tr>
+          <tr><td>谁可见</td><td>下游节点的 prompt/输入</td><td>同一节点内的代码</td></tr>
+          <tr><td>典型用途</td><td>把调查结论传给设计节点</td><td>工具间共享中间计算结果</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <div class="callout-title">✅ 实践原则</div>
+        <strong>边用于"阶段成果"，state 用于"工具协作"。</strong>设计 workflow 时先画出节点图和边，再考虑每个节点内部的工具怎么配合——两层分开设计，思路更清晰。
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="show(4,null)">← 上一节</button>
+        <button class="nav-btn primary" onclick="show(6,null)">下一节 →</button>
+      </div>
+    </div>
+
+    <!-- ── Pane 6: 对比 & 选择 ── -->
+    <div class="tab-pane" id="pane-6">
+      <h2 class="page-title">三种模式对比 &amp; 选择指南</h2>
+      <p class="subtitle">什么场景用什么模式</p>
+
+      <div class="intro-box">
+        这三种模式不是进化关系——不是"条件路由比顺序执行更高级"。它们是<strong>不同场景的不同工具</strong>，选错了反而是负担。
+      </div>
+
+      <h3>完整对比表</h3>
+      <table>
+        <thead>
+          <tr><th>模式</th><th>edges 写法</th><th>谁决定路径</th><th>优势</th><th>风险</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>顺序</strong></td>
+            <td><code>A, B, C</code></td>
+            <td>图结构（确定性）</td>
+            <td>可预测，易调试</td>
+            <td>不灵活</td>
+          </tr>
+          <tr>
+            <td><strong>并行</strong></td>
+            <td><code>(A, B, C), join</code></td>
+            <td>图结构（同时启动）</td>
+            <td>省时间，分工明确</td>
+            <td>分支必须真正独立</td>
+          </tr>
+          <tr>
+            <td><strong>条件路由</strong></td>
+            <td><code>{"x": A, "y": B}</code></td>
+            <td>上游节点的输出内容</td>
+            <td>能循环，能自纠错</td>
+            <td>路径不完全可预测</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>选择指南</h3>
+
+      <div class="concept-card">
+        <div class="label">用顺序执行，当……</div>
+        <ul class="bullets">
+          <li>步骤 B 必须依赖步骤 A 的结果</li>
+          <li>流程不能跳步（合规、金融、审批流）</li>
+          <li>你需要完全可预测的执行记录</li>
+        </ul>
+      </div>
+
+      <div class="concept-card">
+        <div class="label green">用并行执行，当……</div>
+        <ul class="bullets">
+          <li>多个任务之间没有依赖关系</li>
+          <li>各分支需要不同的工具或外部数据源</li>
+          <li>时间是瓶颈（三个 5 秒的任务 → 5 秒而不是 15 秒）</li>
+          <li><strong>⚠️ 不要</strong>把同样的 prompt 并行三次——那是浪费，合成一次调用</li>
+        </ul>
+      </div>
+
+      <div class="concept-card">
+        <div class="label orange">用条件路由，当……</div>
+        <ul class="bullets">
+          <li>需要"如果不对就重做"的自纠错能力</li>
+          <li>分支路径由业务逻辑（而不是随机因素）决定</li>
+          <li>你能接受路径不完全确定（模型输出驱动）</li>
+          <li>需要有限循环（记得设最大迭代次数）</li>
+        </ul>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-title">💡 Lab 的核心金句</div>
+        <em>"一个 callback 管理一个 Agent 叫控制；同样的纪律应用到五个 Agent 上叫架构。"</em><br><br>
+        Workflow 的本质：把单点控制能力（callback、边、路由字典）扩展到整个系统——这才是从写 Agent 到设计 Agent 系统的跨越。
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="show(5,null)">← 上一节</button>
+        <button class="nav-btn primary" onclick="show(7,null)">下一节 →</button>
+      </div>
+    </div>
+
+    <!-- ── Pane 7: 速查 ── -->
+    <div class="tab-pane" id="pane-7">
+      <h2 class="page-title">关键代码速查</h2>
+      <p class="subtitle">Lab 核心语法一览</p>
+
+      <h3>edges 列表语法总结</h3>
+      <pre>
+<span class="cm"># 顺序：逗号分隔</span>
+edges = [<span class="var">a</span>, <span class="var">b</span>, <span class="var">c</span>]
+<span class="cm"># 执行顺序: a → b → c</span>
+
+<span class="cm"># 并行：括号包裹</span>
+edges = [<span class="var">a</span>, <span class="op">(</span><span class="var">b</span>, <span class="var">c</span>, <span class="var">d</span><span class="op">)</span>, <span class="var">join</span>, <span class="var">e</span>]
+<span class="cm"># 执行顺序: a → (b ‖ c ‖ d 同时) → join → e</span>
+
+<span class="cm"># 条件路由：字典</span>
+edges = [<span class="var">a</span>, {<span class="str">"ok"</span>: <span class="var">b</span>, <span class="str">"fail"</span>: <span class="var">c</span>}]
+<span class="cm"># a 的输出若含 "ok" → b；若含 "fail" → c</span>
+
+<span class="cm"># 混合使用（本 Lab 最终形态）</span>
+edges = [
+    <span class="var">survey</span>,
+    <span class="var">blueprint</span>,
+    <span class="op">(</span><span class="var">ground</span>, <span class="var">stock</span>, <span class="var">weather</span><span class="op">)</span>, <span class="var">join</span>, <span class="var">render</span>, <span class="var">inspect</span>,
+    {<span class="str">"rework"</span>: <span class="var">stock</span>, <span class="str">"pass"</span>: <span class="var">finish</span>},
+]</pre>
+
+      <h3>节点类型对照</h3>
+      <table>
+        <thead>
+          <tr><th>节点</th><th>ADK 类型</th><th>特点</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>survey</code></td><td>Agent</td><td>调用 LLM，无外部工具</td></tr>
+          <tr><td><code>blueprint</code></td><td>Agent</td><td>调用 LLM，接收上游结果</td></tr>
+          <tr><td><code>ground</code></td><td>Function</td><td>纯 Python，确定性计算</td></tr>
+          <tr><td><code>stock</code></td><td>Agent + Tools</td><td>调用 LLM + 查询库存工具</td></tr>
+          <tr><td><code>weather</code></td><td>Agent</td><td>调用 LLM 分析气候数据</td></tr>
+          <tr><td><code>join</code></td><td>JoinNode</td><td>ADK 内置，等待所有并行分支</td></tr>
+          <tr><td><code>render</code></td><td>Agent</td><td>综合三方结论生成设计图</td></tr>
+          <tr><td><code>inspect</code></td><td>Agent</td><td>审核，输出 "rework" 或 "pass"</td></tr>
+          <tr><td><code>finish</code></td><td>Agent</td><td>输出最终设计结果</td></tr>
+        </tbody>
+      </table>
+
+      <h3>数据流速查</h3>
+      <table>
+        <thead>
+          <tr><th>场景</th><th>用什么</th><th>代码</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>把 A 的结果给 B</td>
+            <td>edges 列表</td>
+            <td><code>edges = [A, B]</code></td>
+          </tr>
+          <tr>
+            <td>工具间共享中间结果</td>
+            <td>tool_context.state</td>
+            <td><code>ctx.state["key"] = val</code></td>
+          </tr>
+          <tr>
+            <td>收集所有并行结果</td>
+            <td>join 节点</td>
+            <td><code>(A, B, C), join</code></td>
+          </tr>
+          <tr>
+            <td>根据结果选择路径</td>
+            <td>路由字典</td>
+            <td><code>{"ok": X, "fail": Y}</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <div class="callout-title">✅ 三步掌握任意 Workflow</div>
+        <ol style="padding-left: 18px; margin-top: 8px;">
+          <li style="margin-bottom: 8px;"><strong>画节点图</strong>：每个工作单元是一个节点，标出类型（Agent/Function）</li>
+          <li style="margin-bottom: 8px;"><strong>画边</strong>：顺序用箭头，并行用括号，条件路由用字典</li>
+          <li><strong>翻译成 edges 列表</strong>：按照上面的语法直接写出来</li>
+        </ol>
+      </div>
+
+      <div class="callout info" style="margin-top: 20px;">
+        <div class="callout-title">🔗 资源链接</div>
+        <ul class="bullets" style="margin-top: 8px;">
+          <li><a href="https://goo.gle/agent101-ep2" target="_blank" style="color:#1a73e8">▶ Week 2 Replay</a></li>
+          <li><a href="https://goo.gle/agent101-lab2" target="_blank" style="color:#1a73e8">🔬 Hands-on Lab (Codelab)</a></li>
+          <li><a href="https://goo.gle/agent101-ep2-slide" target="_blank" style="color:#1a73e8">📊 Slides</a></li>
+          <li><a href="agent101-notes.html" style="color:#1a73e8">📝 Week 1 学习笔记 (Your First Agent)</a></li>
+        </ul>
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="show(6,null)">← 上一节</button>
+        <button class="nav-btn" disabled>完成 ✓</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function show(idx, btn) {
+    document.querySelectorAll('.tab-pane').forEach((p, i) => {
+      p.classList.toggle('active', i === idx);
+    });
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', i === idx);
+    });
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>
